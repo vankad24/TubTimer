@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">TubTimer</string>
+    <string name="title_track">На трассе</string>
+    <string name="title_free">Свободные</string>
+    <string name="title_repair">В ремонте</string>
+
+</resources>
