@@ -22,7 +22,7 @@ public class Timer{
     public int number;     //numberOfTube
     int duration;     // in seconds
     int time_left;
-    int type;
+    public int type;
     public boolean activated;
 
 
@@ -36,34 +36,35 @@ public class Timer{
         this.duration = duration;
         this.time_left = time_left;
         this.type = type;
-        this.activated = activated;
+        if (activated)start();
     }
 
 
     @Ignore
-    public Timer(int number, int seconds) {
+    public Timer(int number, int seconds, int type) {
         duration = seconds;
         time_left = seconds;
         this.number = number;
         activated= false;
-        type = TUBE_ON_TRACK;
+        this.type = type;
     }
 
 
     public void start(){
         activated = true;
+        type = TUBE_ON_TRACK;
         downTimer = new CountDownTimer(time_left*1000, 1000) {
             @Override
             public void onTick(long millisUntilFinished) {
                 time_left = (int) (millisUntilFinished/1000);
-                listener.onTick(time_left);
+                if (listener!=null)listener.onTick(time_left);
             }
 
             @Override
             public void onFinish() {
                 time_left = duration;
                 activated = false;
-                listener.onFinish();
+                if (listener!=null)listener.onFinish();
             }
         }.start();
     }
@@ -71,6 +72,7 @@ public class Timer{
     public void stop(){
         time_left = duration;
         activated = false;
+        type = TUBE_FREE;
         downTimer.cancel();
     }
 
@@ -92,8 +94,11 @@ public class Timer{
         if (t!=0)time+=t +"ч ";
         t =(time_left / 60) % 60;
         if (t!=0)time+=t+"мин ";
-        /*t =(time_left % 60);
-        if (t!=0)time+=t+"сек";*/
+
+        if (time.equals("")) {
+            t = (time_left % 60);
+            if (t != 0) time += t + "сек";
+        }
         return time;
     }
 

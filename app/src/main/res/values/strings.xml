@@ -3,5 +3,6 @@
     <string name="title_track">На трассе</string>
     <string name="title_free">Свободные</string>
     <string name="title_repair">В ремонте</string>
+    <string name="empty">Список пуст</string>
 
 </resources>
