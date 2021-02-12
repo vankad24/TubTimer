@@ -29,7 +29,6 @@ public class CommandManager {
     public static final String MESSAGE_RESPONSE_ACCEPT_CONNECT = "accept_request";
     public static final String MESSAGE_REQUEST_TOAST = "toast";
 
-    static Gson gson = new Gson();
 
     public static final int ACTION_ADD = 0;
     public static final int ACTION_DELETE = 1;
@@ -41,16 +40,17 @@ public class CommandManager {
 
     private boolean mDiscovering;
 
-    ArrayList<Host> connectedHosts;
-    ArrayList<Host> foundHosts;
+    public ArrayList<Host> connectedHosts = new ArrayList<>();;
+    ArrayList<Host> foundHosts = new ArrayList<>();
     DeviceAdapter adapter;
 
+    public void setAdapter(DeviceAdapter adapter) {
+        this.adapter = adapter;
+    }
+
     public CommandManager(final SearchActivity activity) {
-        connectedHosts = new ArrayList<>();
-        foundHosts = new ArrayList<>();
         this.activity = activity;
 
-        adapter = activity.adapter;
         
         new Thread(new Runnable() {
             @Override
@@ -79,34 +79,10 @@ public class CommandManager {
     void send(int action , Timer... timers){
         for (Host host:connectedHosts) {
             for (Timer t : timers) {
-                nearConnection.send(Command.getBytes(action, t.getStringData()),host);
+                nearConnection.send(new Command(action, t).getBytes(),host);
             }
         }
     }
-
-
-    byte[] getBytesCommand(int action, String timer){
-        return ("&"+action+":"+timer).getBytes();
-    }
-
-    static Timer parseCommand(String command){
-        String[] data = command.substring(1).split(":",1);
-        Timer timer = gson.fromJson(data[1],Timer.class);
-        int action = Integer.parseInt(data[0]);
-
-        switch (action){
-            case ACTION_ADD:
-                //todo
-        }
-
-        return timer;
-    }
-
-
-
-
-
-
 
 
 
@@ -123,11 +99,12 @@ public class CommandManager {
 //                foundHosts = new ArrayList<>(hosts);
                 Toast.makeText(activity, "Host", Toast.LENGTH_SHORT).show();
 
-                ArrayList<Host> list = new ArrayList<>();
+                foundHosts.clear();
                 for (Host host: hosts){
-                    if (!connectedHosts.contains(host)) list.add(host);
+                    if (!connectedHosts.contains(host)) foundHosts.add(host);
                 }
-                adapter.setData(list);
+
+                adapter.setData(foundHosts);
             }
 
 
@@ -145,7 +122,7 @@ public class CommandManager {
 
             @Override
             public void onDiscoverableTimeout() {
-                Toast.makeText(activity, "Устройства не найдены", Toast.LENGTH_LONG).show();
+                if (foundHosts.isEmpty())Toast.makeText(activity, "Устройства не найдены", Toast.LENGTH_LONG).show();
             }
         };
     }
@@ -158,9 +135,6 @@ public class CommandManager {
             public void onReceive(byte[] bytes, final Host sender) {
                 if (bytes != null) {
                     String message = new String(bytes);
-                    if (message.startsWith("&")){
-                        parseCommand(message);
-                    }else
                     switch (message){
                         case MESSAGE_RESPONSE_ACCEPT_CONNECT:
                             activity.connectedDevice.setVisibility(View.VISIBLE);
@@ -212,5 +186,10 @@ public class CommandManager {
             nearConnection.startReceiving();
         }
         nearConnection.send(MESSAGE_REQUEST_CONNECT.getBytes(), host);
+    }
+
+    public void stop() {
+        nearDiscovery.stopDiscovery();
+        nearConnection.stopReceiving(true);
     }
 }

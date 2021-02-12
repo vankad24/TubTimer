@@ -1,38 +1,34 @@
 package com.application.tubtimer.activities;
 
-import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
-import android.app.PendingIntent;
 import android.content.ComponentName;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.os.Bundle;
-import android.os.CountDownTimer;
 import android.os.IBinder;
+import android.os.Looper;
 import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.collection.ArraySet;
+import androidx.room.Room;
+
+import com.adroitandroid.near.connect.NearConnect;
+import com.adroitandroid.near.model.Host;
 import com.application.tubtimer.R;
+import com.application.tubtimer.connection.Command;
 import com.application.tubtimer.database.AppDatabase;
 import com.application.tubtimer.database.DatabaseManager;
-import com.application.tubtimer.database.Timer;
-import com.application.tubtimer.database.TimerDao;
 import com.application.tubtimer.fragments.TubeFragment;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
-import androidx.annotation.NonNull;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.app.NotificationCompat;
-import androidx.core.app.NotificationManagerCompat;
-import androidx.navigation.NavController;
-import androidx.navigation.Navigation;
-import androidx.navigation.ui.AppBarConfiguration;
-import androidx.navigation.ui.NavigationUI;
-import androidx.room.Room;
+import org.jetbrains.annotations.NotNull;
 
-import java.io.ObjectInputStream;
 import java.util.ArrayList;
 
 public class MainActivity extends AppCompatActivity {
@@ -45,6 +41,8 @@ public class MainActivity extends AppCompatActivity {
     ServiceConnection sConn;
     TubeFragment tubeFragment = new TubeFragment();
 
+    ArrayList<Host> connectedHosts;
+    NearConnect nearConnection;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -63,7 +61,7 @@ public class MainActivity extends AppCompatActivity {
         });
 
         database = Room.databaseBuilder(getApplicationContext(),
-                AppDatabase.class, "tube_database")
+                AppDatabase.class, "tube_database1")
                 .allowMainThreadQueries()
                 .build();
 
@@ -80,7 +78,7 @@ public class MainActivity extends AppCompatActivity {
                     NotificationChannel channel = new NotificationChannel(myService.NOTIF_ID,myService.NOTIF_ID, NotificationManager.IMPORTANCE_DEFAULT);
                     myService.nm.createNotificationChannel(channel);
                 }
-                myService.sendNotification("Я родился!");
+//                myService.sendNotification("Я родился!");
 
             }
 
@@ -93,6 +91,55 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        connectedHosts = data.getParcelableExtra(SearchActivity.DEVICES);
+        super.onActivityResult(requestCode, resultCode, data);
+    }
+
+    private void initNearConnect() {
+        ArraySet<Host> peers = new ArraySet<>(connectedHosts);
+        nearConnection = new NearConnect.Builder()
+                .forPeers(peers)
+                .setContext(this)
+                .setListener(getNearConnectListener(), Looper.getMainLooper()).build();
+
+        nearConnection.startReceiving();
+    }
+
+    @NonNull
+    private NearConnect.Listener getNearConnectListener() {
+        return new NearConnect.Listener() {
+            @Override
+            public void onReceive(@NotNull byte[] bytes, @NotNull Host sender) {
+                String message = new String(bytes);
+                if (message.startsWith("&")) {
+                    Command command = Command.parseCommand(message);
+                    //todo switch()
+                    switch (command.action){
+
+                    }
+                }
+
+            }
+
+            @Override
+            public void onSendComplete(long jobId) {
+
+            }
+
+            @Override
+            public void onSendFailure(@org.jetbrains.annotations.Nullable Throwable e, long jobId) {
+
+            }
+
+            @Override
+            public void onStartListenFailure(@org.jetbrains.annotations.Nullable Throwable e) {
+
+            }
+        };
+    }
 
     public void onClick(View view) {
         Intent intent = new Intent(this,SearchActivity.class);

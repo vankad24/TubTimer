@@ -31,7 +31,7 @@ public class TubeFragment extends Fragment {
 
     Button button_add, button_show;
     MainActivity main;
-    RecyclerView recycler;
+    public RecyclerView recycler;
     public DatabaseManager manager;
     EditText number, duration;
     LinearLayout linear_add;
@@ -39,8 +39,8 @@ public class TubeFragment extends Fragment {
 
     public TubeAdapter activeAdapter;
 
-    public static TrackTubeAdapter trackTubeAdapter;
-    public static FreeTubeAdapter freeTubeAdapter;
+    public TrackTubeAdapter trackTubeAdapter;
+    public FreeTubeAdapter freeTubeAdapter;
 
 
     public void changeFragment(int id){
@@ -189,7 +189,7 @@ public class TubeFragment extends Fragment {
                 }
             }
         });
-        activeAdapter = new TubeAdapter(this,Timer.TUBE_IN_REPAIR);
+//        activeAdapter = new TubeAdapter(this,Timer.TUBE_IN_REPAIR);
         recycler.setAdapter(activeAdapter);
 
     }

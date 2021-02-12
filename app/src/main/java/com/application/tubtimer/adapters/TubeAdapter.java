@@ -17,7 +17,8 @@ import com.application.tubtimer.fragments.TubeFragment;
 
 import java.util.ArrayList;
 
-public class TubeAdapter extends RecyclerView.Adapter<TubeAdapter.TubeViewHolder> {
+public abstract class TubeAdapter extends RecyclerView.Adapter<TubeAdapter.TubeViewHolder> {
+    RecyclerView recycler;
     ArrayList<Timer> timers;
     TextView empty;
     DatabaseManager manager;
@@ -28,6 +29,7 @@ public class TubeAdapter extends RecyclerView.Adapter<TubeAdapter.TubeViewHolder
         timers = tubeFragment.manager.getByType(type);
         empty = tubeFragment.empty;
         manager = tubeFragment.manager;
+        recycler = tubeFragment.recycler;
         if (timers.size()==0)empty.setVisibility(View.VISIBLE);
         this.type = type;
     }
@@ -44,7 +46,7 @@ public class TubeAdapter extends RecyclerView.Adapter<TubeAdapter.TubeViewHolder
         return timers.size();
     }
 
-    @Override
+  /*  @Override
     public void onBindViewHolder(@NonNull final TubeViewHolder holder, final int position) {
         final Timer timer = timers.get(position);
         holder.timerView.setText(timer.getTimeString());
@@ -64,7 +66,7 @@ public class TubeAdapter extends RecyclerView.Adapter<TubeAdapter.TubeViewHolder
 
                     if (timers.size() == 0) empty.setVisibility(View.VISIBLE);
                     else empty.setVisibility(View.GONE);
-                    stopTimer(timer);
+                    stopTimer(timer,holder.getAdapterPosition());
 
 //                tubeFragment.activeAdapter.notifyDataSetChanged();//todo
             }
@@ -75,7 +77,7 @@ public class TubeAdapter extends RecyclerView.Adapter<TubeAdapter.TubeViewHolder
         holder.itemView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (timer.activated)stopTimer(timer);
+                if (timer.activated)stopTimer(timer,holder.getAdapterPosition());
                 else startTimer(timer);
 
 //                Log.d("myTag",manager.getBy(timer.type).size()+" "+timers.size());
@@ -83,7 +85,7 @@ public class TubeAdapter extends RecyclerView.Adapter<TubeAdapter.TubeViewHolder
 //                Log.d("myTag",(manager.getList(timer.type).size()+" "+timers.size()));
             }
         });
-    }
+    }*/
 
     @Override
     public void onViewAttachedToWindow(@NonNull TubeViewHolder holder) {
@@ -92,18 +94,18 @@ public class TubeAdapter extends RecyclerView.Adapter<TubeAdapter.TubeViewHolder
         super.onViewAttachedToWindow(holder);
     }
 
-    void update(Timer timer){
+     /*void update(Timer timer){
         manager.update(timer);
         int position = timers.indexOf(timer);
         timers.remove(position);
         notifyItemRemoved(position);
     }
 
-    void stopTimer(Timer timer){
+   void stopTimer(Timer timer, int position){
 
         if (tubeFragment.activeAdapter.type==Timer.TUBE_ON_TRACK){
 
-            int position = tubeFragment.activeAdapter.timers.indexOf(timer);
+//            int position = tubeFragment.activeAdapter.timers.indexOf(timer);
             tubeFragment.activeAdapter.timers.remove(position);
             tubeFragment.activeAdapter.notifyItemRemoved(position);
             timer.stop();
@@ -117,60 +119,30 @@ public class TubeAdapter extends RecyclerView.Adapter<TubeAdapter.TubeViewHolder
             Log.d("my","Hi in free");
         }
 
-        /*if (type==Timer.TUBE_ON_TRACK){
-            if (tubeFragment.activeAdapter.type==type){
-                int position = timers.indexOf(timer);
-                timers.remove(position);
-                notifyItemRemoved(position);
-                timer.stop();
-                manager.update(timer);
-            }else {
-                int position = timers.indexOf(timer);
-                timers.remove(position);
-                timer.stop();
-                manager.update(timer);
-                tubeFragment.activeAdapter.notifyItemInserted(0);
-            }
-        }else {
-            if (tubeFragment.activeAdapter.type==type){
-                ArrayList<Timer> byType = manager.getByType(timer.type);
-                byType.remove(timer);
-                timer.stop();
-                manager.update(timer);
-                notifyItemInserted(0);
-            }else {
-                Log.d("my","Hi 4");
-            }
-        }*/
-        /*int position = timers.indexOf(timer);
-        if (position>0) {
-            timers.remove(position);
-            notifyItemRemoved(position);
-            timer.stop();
-            manager.update(timer);
-            if (tubeFragment.activeAdapter.type == Timer.TUBE_FREE)
-                tubeFragment.activeAdapter.notifyItemInserted(0);
-        }else {
-            ArrayList<Timer> byType = manager.getByType(timer.type);
-            byType.remove(timer);
-            timer.stop();
-            manager.update(timer);
-            notifyItemInserted(0);
-        }*/
-
-
-    }
+    }*/
 
     void startTimer(Timer timer){
-        int position = timers.indexOf(timer);
-        if (position>=0){
-            timers.remove(position);
-            notifyItemRemoved(position);
-        }
+        int position = tubeFragment.freeTubeAdapter.timers.indexOf(timer);
+//        Log.d("my",timer.number+" "+position);
+
+            tubeFragment.freeTubeAdapter.timers.remove(position);
         timer.start();
+//            tubeFragment.freeTubeAdapter.notifyItemRemoved(position);
+            tubeFragment.freeTubeAdapter.notifyDataSetChanged();//todo bug
+
         manager.update(timer);
     }
 
+
+    void stopTimer(Timer timer) {
+        int position = tubeFragment.trackTubeAdapter.timers.indexOf(timer);
+        tubeFragment.trackTubeAdapter.timers.remove(position);
+        timer.stop();
+        tubeFragment.trackTubeAdapter.notifyItemRemoved(position);
+        manager.update(timer);
+        tubeFragment.freeTubeAdapter.notifyItemInserted(0);
+        recycler.smoothScrollToPosition(0);
+    }
 
 
     class TubeViewHolder extends RecyclerView.ViewHolder {

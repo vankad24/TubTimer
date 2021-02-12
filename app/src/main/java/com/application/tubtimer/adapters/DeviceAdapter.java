@@ -46,7 +46,7 @@ public class DeviceAdapter extends RecyclerView.Adapter<DeviceAdapter.DeviceView
     @Override
     public void onBindViewHolder(@NonNull final DeviceViewHolder holder, int position) {
         if (TYPE_HEADER == holder.mViewType) {
-            holder.name.setText("Найдены устройства:");
+            holder.name.setText("Найденые устройства:");
         } else {
             Host host = mParticipants.get(position - 1);
             holder.name.setText(host.getName());

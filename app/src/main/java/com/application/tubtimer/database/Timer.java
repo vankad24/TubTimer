@@ -70,6 +70,7 @@ public class Timer{
     }
 
     public void stop(){
+        listener = null;
         time_left = duration;
         activated = false;
         type = TUBE_FREE;
@@ -89,17 +90,21 @@ public class Timer{
     }
 
     public String getTimeString(){
-        String time="";
-        int t = (time_left / 3600)%24;
-        if (t!=0)time+=t +"ч ";
-        t =(time_left / 60) % 60;
-        if (t!=0)time+=t+"мин ";
+        return getTimeString(time_left);
+    }
 
-        if (time.equals("")) {
-            t = (time_left % 60);
-            if (t != 0) time += t + "сек";
+    public static String getTimeString(int time){
+        String time_string="";
+        int t = (time / 3600)%24;
+        if (t!=0)time_string+=t +"ч ";
+        t =(time / 60) % 60;
+        if (t!=0)time_string+=t+"мин ";
+
+        if (time_string.equals("")) {
+            t = (time % 60);
+            if (t != 0) time_string += t + "сек";
         }
-        return time;
+        return time_string;
     }
 
     public interface TickListener{

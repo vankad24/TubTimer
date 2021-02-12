@@ -17,10 +17,10 @@ public class TrackTubeAdapter extends TubeAdapter {
     @Override
     public void onBindViewHolder(@NonNull final TubeViewHolder holder, int position) {
 
-        final Timer timer = timers.get(position);
+        final Timer timer = timers.get(holder.getAdapterPosition());
         holder.timerView.setText(timer.getTimeString());
-
         holder.tvNumber.setText(timer.number+"");
+
 
         holder.itemView.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -32,7 +32,7 @@ public class TrackTubeAdapter extends TubeAdapter {
         timer.setOnTickListener(new Timer.TickListener() {
             @Override
             public void onTick(int secondsUntilFinished) {
-                holder.timerView.setText(timer.getTimeString());
+//                holder.timerView.setText(Timer.getTimeString(secondsUntilFinished));
                 if (type==Timer.TUBE_ON_TRACK) Log.d("my","Hi in track");
                 else Log.d("my","Hi in free");
             }
@@ -49,19 +49,5 @@ public class TrackTubeAdapter extends TubeAdapter {
 
     }
 
-    @Override
-    void stopTimer(Timer timer) {
-        int position = timers.indexOf(timer);
-        timers.remove(position);
-        notifyItemRemoved(position);
-        timer.stop();
-        manager.update(timer);
-        tubeFragment.freeTubeAdapter.notifyItemInserted(0);
-    }
-
-    @Override
-    void startTimer(Timer timer) {
-
-    }
 
 }
