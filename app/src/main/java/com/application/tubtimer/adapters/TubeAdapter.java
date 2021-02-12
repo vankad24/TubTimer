@@ -127,8 +127,8 @@ public abstract class TubeAdapter extends RecyclerView.Adapter<TubeAdapter.TubeV
 
             tubeFragment.freeTubeAdapter.timers.remove(position);
         timer.start();
-//            tubeFragment.freeTubeAdapter.notifyItemRemoved(position);
-            tubeFragment.freeTubeAdapter.notifyDataSetChanged();//todo bug
+            tubeFragment.freeTubeAdapter.notifyItemRemoved(position);
+//            tubeFragment.freeTubeAdapter.notifyDataSetChanged();//todo bug
 
         manager.update(timer);
     }
@@ -140,8 +140,8 @@ public abstract class TubeAdapter extends RecyclerView.Adapter<TubeAdapter.TubeV
         timer.stop();
         tubeFragment.trackTubeAdapter.notifyItemRemoved(position);
         manager.update(timer);
-        tubeFragment.freeTubeAdapter.notifyItemInserted(0);
         recycler.smoothScrollToPosition(0);
+        tubeFragment.freeTubeAdapter.notifyItemInserted(0);
     }
 
 

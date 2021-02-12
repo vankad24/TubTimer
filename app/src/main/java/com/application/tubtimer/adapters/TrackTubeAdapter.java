@@ -32,7 +32,7 @@ public class TrackTubeAdapter extends TubeAdapter {
         timer.setOnTickListener(new Timer.TickListener() {
             @Override
             public void onTick(int secondsUntilFinished) {
-//                holder.timerView.setText(Timer.getTimeString(secondsUntilFinished));
+                holder.timerView.setText(timer.getTimeString());
                 if (type==Timer.TUBE_ON_TRACK) Log.d("my","Hi in track");
                 else Log.d("my","Hi in free");
             }
