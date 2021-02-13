@@ -18,6 +18,9 @@ public interface TimerDao {
     @Query("SELECT * FROM Timer WHERE type = :type")
     List<Timer> getByType(int type);
 
+    @Query("DELETE FROM Timer WHERE number = :number")
+    void  deleteByNumber(int number);
+
     @Insert
     void insert(Timer timer);
 

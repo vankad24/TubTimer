@@ -24,6 +24,15 @@ public class FreeTubeAdapter extends TubeAdapter {
 
         holder.tvNumber.setText(timer.number+"");
 
+
+        holder.itemView.setOnLongClickListener(new View.OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View v) {
+                Toast.makeText(holder.timerView.getContext(),"Тебе чё надо?",Toast.LENGTH_SHORT).show();
+                return true;
+            }
+        });
+
         holder.itemView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -47,18 +56,13 @@ public class FreeTubeAdapter extends TubeAdapter {
         timer.setOnTickListener(new Timer.TickListener() {
             @Override
             public void onTick(int secondsUntilFinished) {
-                if (!timer.activated)holder.timerView.setText(Timer.getTimeString(secondsUntilFinished));
-                /*if (tubeFragment.activeAdapter.type==Timer.TUBE_ON_TRACK) Log.d("my","Hi in track");
-                else Log.d("my","Hi in free");*/
             }
 
             @Override
             public void onFinish() {
                 Toast.makeText(holder.timerView.getContext(),"Finished",Toast.LENGTH_SHORT).show();
-                holder.timerView.setText(timer.getTimeString());
+
                 stopTimer(timer);
-                if (timers.size() == 0) empty.setVisibility(View.VISIBLE);
-                else empty.setVisibility(View.GONE);
             }
         });
     }

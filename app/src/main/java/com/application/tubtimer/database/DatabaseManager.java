@@ -27,7 +27,8 @@ public class DatabaseManager{
     public boolean insert(Timer timer) {
         try{
             dao.insert(timer);
-            return getByType(timer.type).add(timer);
+            getByType(timer.type).add(0, timer);
+            return true;
         }catch (Exception e){
             e.printStackTrace();
         }
@@ -42,8 +43,8 @@ public class DatabaseManager{
 
     
     public void delete(Timer timer) {
-        getByType(timer.type).remove(timer);
-        dao.delete(timer);
+//        getByType(timer.type).remove(timer);
+        dao.deleteByNumber(timer.number);
     }
 
     public ArrayList<Timer> getByType(int type) {

@@ -16,10 +16,12 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.application.tubtimer.adapters.FreeTubeAdapter;
+import com.application.tubtimer.adapters.RepairTubeAdapter;
 import com.application.tubtimer.adapters.TrackTubeAdapter;
 import com.application.tubtimer.adapters.TubeAdapter;
 import com.application.tubtimer.database.DatabaseManager;
@@ -37,10 +39,10 @@ public class TubeFragment extends Fragment {
     LinearLayout linear_add;
     public TextView empty;
 
-    public TubeAdapter activeAdapter;
 
     public TrackTubeAdapter trackTubeAdapter;
     public FreeTubeAdapter freeTubeAdapter;
+    public RepairTubeAdapter repairTubeAdapter;
 
 
     public void changeFragment(int id){
@@ -55,6 +57,8 @@ public class TubeFragment extends Fragment {
                 onRepair();
                 break;
         }
+        ((TubeAdapter) recycler.getAdapter()).checkEmpty();
+
     }
 
     @Nullable
@@ -81,9 +85,35 @@ public class TubeFragment extends Fragment {
 
         freeTubeAdapter = new FreeTubeAdapter(this,Timer.TUBE_FREE);
         trackTubeAdapter = new TrackTubeAdapter(this,Timer.TUBE_ON_TRACK);
-
+        repairTubeAdapter = new RepairTubeAdapter(this,Timer.TUBE_IN_REPAIR);
 
         changeFragment(R.id.navigation_track);
+
+        ItemTouchHelper.Callback callback = new ItemTouchHelper.Callback() {
+            @Override
+            public boolean isItemViewSwipeEnabled() {
+                return true;
+            }
+
+            @Override
+            public int getMovementFlags(@NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder viewHolder) {
+                return makeMovementFlags(0, ItemTouchHelper.START | ItemTouchHelper.END);
+            }
+
+            @Override
+            public boolean onMove(@NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder viewHolder, @NonNull RecyclerView.ViewHolder target) {
+                return false;
+            }
+
+            @Override
+            public void onSwiped(@NonNull RecyclerView.ViewHolder holder, int direction) {
+                ((TubeAdapter) recycler.getAdapter()).deleteTimer(holder.getAdapterPosition());
+
+            }
+        };
+        new ItemTouchHelper(callback).attachToRecyclerView(recycler);
+
+
         return root;
     }
 
@@ -92,7 +122,7 @@ public class TubeFragment extends Fragment {
         getActivity().setTitle(R.string.title_track);
         button_show.setVisibility(View.GONE);
 
-//        activeAdapter = new TubeAdapter(this,Timer.TUBE_ON_TRACK);
+
         recycler.setAdapter(trackTubeAdapter);
     }
 
@@ -113,12 +143,12 @@ public class TubeFragment extends Fragment {
                 try {
                     if (!manager.insert(new Timer(Integer.parseInt(number.getText().toString()),
                             Integer.parseInt(duration.getText().toString()), Timer.TUBE_FREE)))
-                        Toast.makeText(getActivity().getApplicationContext(),"Error",Toast.LENGTH_SHORT).show();
+                        Toast.makeText(main,"Error",Toast.LENGTH_SHORT).show();
                 }catch (Exception e){
                     e.printStackTrace();
-                    Toast.makeText(getActivity().getApplicationContext(),"Error",Toast.LENGTH_SHORT).show();
+                    Toast.makeText(main,"Error",Toast.LENGTH_SHORT).show();
                 }
-                recycler.getAdapter().notifyDataSetChanged();
+                recycler.getAdapter().notifyItemInserted(0);
             }
         });
 
@@ -136,7 +166,6 @@ public class TubeFragment extends Fragment {
             }
         });
 //        activeAdapter = new TubeAdapter(this,Timer.TUBE_FREE);
-
 
         recycler.setAdapter(freeTubeAdapter);
 
@@ -166,13 +195,13 @@ public class TubeFragment extends Fragment {
             public void onClick(View v) {
                 try {
                     if (!manager.insert(new Timer(Integer.parseInt(number.getText().toString()),
-                            Integer.parseInt(duration.getText().toString()), Timer.TUBE_IN_REPAIR)))
-                        Toast.makeText(getActivity().getApplicationContext(),"Error",Toast.LENGTH_SHORT).show();
+                            Integer.parseInt(duration.getText().toString()), Timer.TUBE_FREE)))
+                        Toast.makeText(main,"Error",Toast.LENGTH_SHORT).show();
                 }catch (Exception e){
                     e.printStackTrace();
-                    Toast.makeText(getActivity().getApplicationContext(),"Error",Toast.LENGTH_SHORT).show();
+                    Toast.makeText(main,"Error",Toast.LENGTH_SHORT).show();
                 }
-                recycler.getAdapter().notifyDataSetChanged();
+                recycler.getAdapter().notifyItemInserted(0);
             }
         });
 
@@ -190,7 +219,7 @@ public class TubeFragment extends Fragment {
             }
         });
 //        activeAdapter = new TubeAdapter(this,Timer.TUBE_IN_REPAIR);
-        recycler.setAdapter(activeAdapter);
+        recycler.setAdapter(repairTubeAdapter);
 
     }
 
