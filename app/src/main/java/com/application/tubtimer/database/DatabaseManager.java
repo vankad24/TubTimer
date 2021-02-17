@@ -1,5 +1,9 @@
 package com.application.tubtimer.database;
 
+import android.util.Log;
+
+import com.application.tubtimer.adapters.TubeAdapter;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -19,10 +23,42 @@ public class DatabaseManager{
 
     
     public Timer getByNumber(int number) {
+        for (int i = 0; i < 3; i++) {
+            for (Timer t:getByType(i)){
+                if (t.number==number)return t;
+            }
+        }
         return null;
     }
 
+    public boolean timerNotExist(Timer timer){
+        return timerNotExist(timer.number);
+    }
 
+    public boolean timerNotExist(int number){
+        return dao.getByNumber(number)==null;
+    }
+
+
+    public void change(Timer timer, TubeAdapter activeAdapter){
+        for (int i = 0; i < 3; i++) {
+            ArrayList<Timer> list = getByType(i);
+            for (int j = 0; j < list.size(); j++) {
+                Timer t = list.get(j);
+                if (t.number==timer.number){
+                    Log.d("my", "change tube " + t.number);
+                    if (timer.type == Timer.TUBE_IN_REPAIR)activeAdapter.moveToRepair(t);
+                    else {
+                        list.set(j, timer);
+                        if (timer.activated) activeAdapter.startTimer(timer);
+                        else activeAdapter.stopTimer(timer);
+                        activeAdapter.notifyDataSetChanged();
+                    }
+                    return;
+                }
+            }
+        }
+    }
     
     public boolean insert(Timer timer) {
         try{
@@ -43,7 +79,6 @@ public class DatabaseManager{
 
     
     public void delete(Timer timer) {
-//        getByType(timer.type).remove(timer);
         dao.deleteByNumber(timer.number);
     }
 
@@ -60,5 +95,12 @@ public class DatabaseManager{
                 return repair;
         }
         return null;
+    }
+
+    public void setLists(ArrayList<Timer> track, ArrayList<Timer> free, ArrayList<Timer> repair){
+        //todo очистить БД
+        this.track = track;
+        this.free = free;
+        this.repair = repair;
     }
 }

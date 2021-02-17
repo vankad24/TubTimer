@@ -5,13 +5,12 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
-import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.application.tubtimer.R;
+import com.application.tubtimer.connection.Command;
 import com.application.tubtimer.database.DatabaseManager;
 import com.application.tubtimer.database.Timer;
 import com.application.tubtimer.fragments.TubeFragment;
@@ -20,7 +19,7 @@ import java.util.ArrayList;
 
 public abstract class TubeAdapter extends RecyclerView.Adapter<TubeAdapter.TubeViewHolder> {
     RecyclerView recycler;
-    ArrayList<Timer> timers;
+    public ArrayList<Timer> timers;
     TextView empty;
     DatabaseManager manager;
     TubeFragment tubeFragment;
@@ -50,39 +49,55 @@ public abstract class TubeAdapter extends RecyclerView.Adapter<TubeAdapter.TubeV
         return timers.size();
     }
 
-    void startTimer(Timer timer) {
+    public void startTimer(Timer timer) {
+        Log.d("my","startTimer");
         int position = tubeFragment.freeTubeAdapter.timers.indexOf(timer);
-        Log.d("my", timer.number + " " + (position == position));
-
-        tubeFragment.freeTubeAdapter.timers.remove(position);
+        if (position>=0) {
+            tubeFragment.freeTubeAdapter.timers.remove(position);
+            tubeFragment.freeTubeAdapter.notifyItemRemoved(position);
+        }
         timer.start();
-        tubeFragment.freeTubeAdapter.notifyItemRemoved(position);
         manager.update(timer);
         ((TubeAdapter) recycler.getAdapter()).checkEmpty();
     }
 
 
-    void stopTimer(Timer timer) {
+    public void stopTimer(Timer timer) {
         int position = tubeFragment.trackTubeAdapter.timers.indexOf(timer);
-        tubeFragment.trackTubeAdapter.timers.remove(position);
+        if (position>=0) {
+            tubeFragment.trackTubeAdapter.timers.remove(position);
+            tubeFragment.trackTubeAdapter.notifyItemRemoved(position);
+        }
         timer.stop();
-        tubeFragment.trackTubeAdapter.notifyItemRemoved(position);
         manager.update(timer);
         recycler.smoothScrollToPosition(0);
         tubeFragment.freeTubeAdapter.notifyItemInserted(0);
         ((TubeAdapter) recycler.getAdapter()).checkEmpty();
     }
 
+    public void deleteTimer(int position){
+        manager.delete(timers.get(position));
+        timers.remove(position);
+        notifyItemRemoved(position);
+    }
+
+    public void moveToRepair(Timer timer){
+        TubeAdapter adapter;
+        if (timer.type == Timer.TUBE_FREE)adapter = tubeFragment.freeTubeAdapter;
+        else adapter = tubeFragment.trackTubeAdapter;
+        int position = adapter.timers.indexOf(timer);
+        adapter.timers.remove(position);
+        adapter.notifyItemRemoved(position);
+        if (timer.activated)timer.stop();
+        timer.type = Timer.TUBE_IN_REPAIR;
+
+        manager.update(timer);
+        tubeFragment.repairTubeAdapter.notifyDataSetChanged();
+    }
+
     public void checkEmpty(){
         if (timers.size() == 0) empty.setVisibility(View.VISIBLE);
         else empty.setVisibility(View.GONE);
-    }
-
-    public void deleteTimer(int position){
-        timers.remove(position);
-        manager.delete(timers.get(position));
-        notifyItemRemoved(position);
-
     }
 
     class TubeViewHolder extends RecyclerView.ViewHolder {

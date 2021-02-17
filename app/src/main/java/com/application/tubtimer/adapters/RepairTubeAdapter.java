@@ -7,6 +7,7 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 
+import com.application.tubtimer.connection.Command;
 import com.application.tubtimer.database.Timer;
 import com.application.tubtimer.fragments.TubeFragment;
 
@@ -24,19 +25,23 @@ public class RepairTubeAdapter extends TubeAdapter {
         holder.itemView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-
+                new AlertDialog.Builder(holder.itemView.getContext())
+                        .setMessage("Переместить в свободные?")
+                        .setPositiveButton("Да", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                int position = tubeFragment.repairTubeAdapter.timers.indexOf(timer);
+                                if (position>=0) {
+                                    tubeFragment.repairTubeAdapter.timers.remove(position);
+                                    tubeFragment.repairTubeAdapter.notifyItemRemoved(position);
+                                }
+                                timer.stop();
+                                manager.update(timer);
+                            }
+                        })
+                        .setNegativeButton("Нет", null).create().show();
             }
         });
 
-        timer.setOnTickListener(new Timer.TickListener() {
-            @Override
-            public void onTick(int secondsUntilFinished) {
-            }
-
-            @Override
-            public void onFinish() {
-
-            }
-        });
     }
 }

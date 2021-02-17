@@ -6,8 +6,13 @@ import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Intent;
+import android.graphics.Color;
+import android.media.RingtoneManager;
+import android.media.audiofx.Equalizer;
+import android.net.Uri;
 import android.os.Binder;
 import android.os.IBinder;
+import android.provider.Settings;
 import android.util.Log;
 
 import androidx.core.app.NotificationCompat;
@@ -46,11 +51,11 @@ public class MyService extends Service {
                 .setContentTitle("Время вышло!")
                 .setContentText(s)
                 .setAutoCancel(true)
+                .setDefaults(Notification.DEFAULT_SOUND)
                 .setContentIntent(pIntent)
                 .setWhen(System.currentTimeMillis())
                 .setVibrate(new long[]{0,400,200,400,200,400})
                 .setPriority(NotificationCompat.PRIORITY_DEFAULT).build();
-
 
 //        NotificationManagerCompat notificationManager =
 //                NotificationManagerCompat.from(this);

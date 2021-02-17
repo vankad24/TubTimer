@@ -4,6 +4,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
@@ -11,7 +12,6 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.adroitandroid.near.model.Host;
 import com.application.tubtimer.R;
 import com.application.tubtimer.activities.SearchActivity;
-import com.application.tubtimer.connection.CommandManager;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -53,7 +53,8 @@ public class DeviceAdapter extends RecyclerView.Adapter<DeviceAdapter.DeviceView
             holder.itemView.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    activity.commandManager.sendConnectRequest(mParticipants.get(holder.getAdapterPosition() - 1));
+                    activity.discoveryManager.sendConnectRequest(mParticipants.get(holder.getAdapterPosition() - 1));
+                    Toast.makeText(activity,"Отправлено", Toast.LENGTH_SHORT).show();
                 }
             });
         }

@@ -4,9 +4,13 @@ import com.application.tubtimer.database.Timer;
 import com.google.gson.Gson;
 
 public class Command {
+    public static final int ACTION_ADD = 0;
+    public static final int ACTION_DELETE = 1;
+    public static final int ACTION_CHANGE = 2;
+
     static Gson gson = new Gson();
 
-    byte[] getBytes(){
+    public byte[] getBytes(){
         return ("&"+gson.toJson(this)).getBytes();
     }
 

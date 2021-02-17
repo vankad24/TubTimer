@@ -1,11 +1,13 @@
 package com.application.tubtimer.adapters;
 
-import android.util.Log;
+import android.content.DialogInterface;
 import android.view.View;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
 
+import com.application.tubtimer.connection.Command;
 import com.application.tubtimer.database.Timer;
 import com.application.tubtimer.fragments.TubeFragment;
 
@@ -16,7 +18,6 @@ public class TrackTubeAdapter extends TubeAdapter {
 
     @Override
     public void onBindViewHolder(@NonNull final TubeViewHolder holder, int position) {
-
         final Timer timer = timers.get(holder.getAdapterPosition());
         holder.timerView.setText(timer.getTimeString());
         holder.tvNumber.setText(timer.number+"");
@@ -25,7 +26,18 @@ public class TrackTubeAdapter extends TubeAdapter {
         holder.itemView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (timer.activated)stopTimer(timer);
+                new AlertDialog.Builder(holder.itemView.getContext())
+                        .setMessage("Остановить таймер?")
+                        .setPositiveButton("Да", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                if (timer.activated){
+                                    stopTimer(timer);
+                                    tubeFragment.commandManager.send(Command.ACTION_CHANGE, timer);
+                                }
+                            }
+                        })
+                        .setNegativeButton("Нет", null).create().show();
             }
         });
 
@@ -38,8 +50,9 @@ public class TrackTubeAdapter extends TubeAdapter {
 
             @Override
             public void onFinish() {
-                Toast.makeText(holder.timerView.getContext(),"Finished",Toast.LENGTH_SHORT).show();
+                Toast.makeText(holder.timerView.getContext(),"Время вышло",Toast.LENGTH_SHORT).show();
                 holder.timerView.setText(timer.getTimeString());
+                tubeFragment.main.myService.sendNotification("Время для тюба номер "+timer.number+" вышло!");
                 stopTimer(timer);
             }
         });

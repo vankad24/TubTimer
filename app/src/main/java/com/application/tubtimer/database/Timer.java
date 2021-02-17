@@ -20,8 +20,8 @@ public class Timer{
     TickListener listener;
     @PrimaryKey
     public int number;     //numberOfTube
-    int duration;     // in seconds
-    int time_left;
+    public int duration;     // in seconds
+    public int time_left;
     public int type;
     public boolean activated;
 
@@ -74,7 +74,7 @@ public class Timer{
         time_left = duration;
         activated = false;
         type = TUBE_FREE;
-        downTimer.cancel();
+        if (downTimer!=null)downTimer.cancel();
     }
 
     public void pause(){
