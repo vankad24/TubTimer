@@ -2,6 +2,7 @@ package com.application.tubtimer.database;
 
 import android.util.Log;
 
+import com.application.tubtimer.activities.MainActivity;
 import com.application.tubtimer.adapters.TubeAdapter;
 
 import java.util.ArrayList;
@@ -13,8 +14,10 @@ public class DatabaseManager{
     private ArrayList<Timer> free;
     private ArrayList<Timer> repair;
 
-    public DatabaseManager(TimerDao dao) {
-        this.dao = dao;
+    MainActivity main;
+    public DatabaseManager(MainActivity main) {
+        this.main = main;
+        this.dao = main.database.timerDao();
     }
 
     public List<Timer> getAll(){
@@ -49,7 +52,10 @@ public class DatabaseManager{
                     Log.d("my", "change tube " + t.number);
                     if (timer.type == Timer.TUBE_IN_REPAIR)activeAdapter.moveToRepair(t);
                     else {
-                        list.set(j, timer);
+                        if (timer.type==t.type)
+                            list.set(j, timer);
+                        else list.remove(t);
+
                         if (timer.activated) activeAdapter.startTimer(timer);
                         else activeAdapter.stopTimer(timer);
                         activeAdapter.notifyDataSetChanged();
@@ -98,7 +104,12 @@ public class DatabaseManager{
     }
 
     public void setLists(ArrayList<Timer> track, ArrayList<Timer> free, ArrayList<Timer> repair){
-        //todo очистить БД
+
+        main.database.clearAllTables();
+        for (Timer timer:track)dao.insert(timer);
+        for (Timer timer:free)dao.insert(timer);
+        for (Timer timer:repair)dao.insert(timer);
+
         this.track = track;
         this.free = free;
         this.repair = repair;

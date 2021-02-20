@@ -7,26 +7,29 @@ import androidx.recyclerview.widget.RecyclerView;
 import android.content.Intent;
 import android.os.Bundle;
 import android.provider.Settings;
-import android.util.Log;
 import android.view.View;
+import android.widget.Button;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
+import com.adroitandroid.near.model.Host;
 import com.application.tubtimer.R;
-import com.application.tubtimer.adapters.DeviceAdapter;
 import com.application.tubtimer.connection.DiscoveryManager;
 
+import java.util.ArrayList;
+
 public class SearchActivity extends AppCompatActivity {
-    public DeviceAdapter adapter;
     public RecyclerView recycler;
     public DiscoveryManager discoveryManager;
     public TextView connectedDevice;
     public ProgressBar bar;
+    public Button button_search;
 
     public final static String DEVICES = "manager";
 
-    public static void start(MainActivity activity) {
+    public static void start(MainActivity activity, ArrayList<Host> connectedHosts) {
         Intent intent = new Intent(activity, SearchActivity.class);
+        intent.putParcelableArrayListExtra(DEVICES, connectedHosts);
         activity.startActivityForResult(intent, 1);
     }
 
@@ -38,21 +41,26 @@ public class SearchActivity extends AppCompatActivity {
         recycler = findViewById(R.id.recycler_devices);
         connectedDevice = findViewById(R.id.connected_device);
         bar = findViewById(R.id.device_bar);
+        button_search = findViewById(R.id.search);
 
         discoveryManager = new DiscoveryManager(this);
-        adapter = new DeviceAdapter(this);
-        discoveryManager.setAdapter(adapter);
-
 
         recycler.setLayoutManager(new LinearLayoutManager(getApplicationContext()));
-        recycler.setAdapter(adapter);
+        recycler.setAdapter(discoveryManager.adapter);
+
+        button_search.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (!discoveryManager.isConnected()) {
+                    discoveryManager.start(Settings.Secure.getString(getContentResolver(), "bluetooth_name"));
+                    bar.setVisibility(View.VISIBLE);
+                }else {
+                    discoveryManager.disconnect();
+                }
+            }
+        });
     }
 
-    public void onClick(View view) {
-        discoveryManager.start(Settings.Secure.getString(getContentResolver(), "bluetooth_name"));
-
-        bar.setVisibility(View.VISIBLE);
-    }
 
     @Override
     public void onBackPressed() {
@@ -60,7 +68,7 @@ public class SearchActivity extends AppCompatActivity {
         discoveryManager.stop();
         Intent intent = new Intent(this,MainActivity.class);
         intent.putParcelableArrayListExtra(DEVICES, discoveryManager.connectedHosts);
-        intent.putExtra("int",24);
+        intent.putExtra("int",24);//todo remove
         finishActivity(1);
         setResult(RESULT_OK, intent);
         finish();

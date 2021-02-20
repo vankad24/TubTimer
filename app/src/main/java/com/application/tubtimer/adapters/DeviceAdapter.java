@@ -12,6 +12,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.adroitandroid.near.model.Host;
 import com.application.tubtimer.R;
 import com.application.tubtimer.activities.SearchActivity;
+import com.application.tubtimer.connection.DiscoveryManager;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -20,21 +21,23 @@ import java.util.List;
 public class DeviceAdapter extends RecyclerView.Adapter<DeviceAdapter.DeviceViewHolder> {
     private static final int TYPE_HEADER = 1;
     private static final int TYPE_ITEM = 2;
-    private List<Host> mParticipants;
+    public List<Host> hostList;
     SearchActivity activity;
 
     public DeviceAdapter(SearchActivity activity) {
-        mParticipants = new ArrayList<>();
+        hostList = new ArrayList<>();
         this.activity = activity;
+    }
+
+    public void setData(List<Host> hosts){
+        hostList = hosts;
+        notifyDataSetChanged();
     }
 
     @Override
     public int getItemViewType(int position) {
-        if (position == 0) {
-            return TYPE_HEADER;
-        } else {
-            return TYPE_ITEM;
-        }
+        if (position == 0) return TYPE_HEADER;
+        else return TYPE_ITEM;
     }
 
     @Override
@@ -46,29 +49,32 @@ public class DeviceAdapter extends RecyclerView.Adapter<DeviceAdapter.DeviceView
     @Override
     public void onBindViewHolder(@NonNull final DeviceViewHolder holder, int position) {
         if (TYPE_HEADER == holder.mViewType) {
-            holder.name.setText("Найденные устройства:");
+            if (hostList.size()==0){
+                holder.name.setText(R.string.empty);
+            }else{
+                String s = "Найденные устройства:";
+                if (DiscoveryManager.host) s = "Подключённые устройства " + hostList.size() + ":";
+                holder.name.setText(s);
+            }
         } else {
-            Host host = mParticipants.get(position - 1);
+            Host host = hostList.get(position - 1);
             holder.name.setText(host.getName());
-            holder.itemView.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    activity.discoveryManager.sendConnectRequest(mParticipants.get(holder.getAdapterPosition() - 1));
-                    Toast.makeText(activity,"Отправлено", Toast.LENGTH_SHORT).show();
-                }
-            });
+            if (!DiscoveryManager.host)
+                holder.itemView.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        activity.discoveryManager.sendConnectRequest(hostList.get(holder.getAdapterPosition() - 1));
+                        Toast.makeText(activity, "Отправлено", Toast.LENGTH_SHORT).show();
+                    }
+                });
         }
     }
 
     @Override
     public int getItemCount() {
-        return mParticipants.size() == 0 ? 0 : mParticipants.size() + 1;
+        return hostList.size() + 1;
     }
 
-    public void setData(ArrayList<Host> hosts) {
-        mParticipants = hosts;
-        notifyDataSetChanged();
-    }
 
     class DeviceViewHolder extends RecyclerView.ViewHolder {
         private final int mViewType;
@@ -80,12 +86,6 @@ public class DeviceAdapter extends RecyclerView.Adapter<DeviceAdapter.DeviceView
             name = root.findViewById(R.id.name_tv);
             this.mViewType = mViewType;
         }
-
-        /*DeviceViewHolder(int viewType, @NonNull RowParticipantsBinding binding) {
-            super(binding.getRoot());
-            this.mBinding = binding;
-            this.mViewType = viewType;
-        }*/
     }
 
 }

@@ -2,6 +2,7 @@ package com.application.tubtimer.connection;
 
 import android.os.Looper;
 import android.util.Log;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.collection.ArraySet;
@@ -20,6 +21,7 @@ import java.util.ArrayList;
 public class CommandManager {
 
     public final static String  UPDATE_ALL = "$update";
+    public static final String MESSAGE_REQUEST_PING = "ping";
 
     MainActivity main;
     public NearConnect nearConnection;
@@ -49,8 +51,8 @@ public class CommandManager {
             public void onReceive(@NotNull byte[] bytes, @NotNull Host sender) {
                 try {
                     String message = new String(bytes);
+                    Log.d("my", "receive " + message);
                     if (message.startsWith("&")) {
-                        Log.d("my", "receive " + message);
                         Command command = Command.parseCommand(message);
                         TubeAdapter activeAdapter = (TubeAdapter) main.tubeFragment.recycler.getAdapter();
                         switch (command.action) {
@@ -84,6 +86,10 @@ public class CommandManager {
                     } else if (message.startsWith(UPDATE_ALL)) {
                         message = message.substring(UPDATE_ALL.length());
                         UpdateAllHelper.updateAllAdapters(main, message);
+                    }else switch (message){
+                        case MESSAGE_REQUEST_PING:
+                            Toast.makeText(main.getApplicationContext(),"Ping", Toast.LENGTH_SHORT).show();
+                            break;
                     }
                 }catch (Exception e){
                     e.printStackTrace();
@@ -108,8 +114,9 @@ public class CommandManager {
         };
     }
 
+
     public void send(int action , Timer timer){
-        if(nearConnection==null){
+        if(nearConnection==null/*||!DiscoveryManager.host*/){
             Log.d("my","send null");
             return;
         }
@@ -122,7 +129,7 @@ public class CommandManager {
     }
 
     public void sendAll(){
-        if(nearConnection==null)return;
+        if (!DiscoveryManager.host)return;
         byte[] bytes =(UPDATE_ALL+new UpdateAllHelper(main.manager.getByType(Timer.TUBE_ON_TRACK),
                 main.manager.getByType(Timer.TUBE_FREE),main.manager.getByType(Timer.TUBE_IN_REPAIR))
                 .getData()).getBytes();

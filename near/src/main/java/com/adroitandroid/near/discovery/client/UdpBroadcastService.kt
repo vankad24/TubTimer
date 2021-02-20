@@ -38,7 +38,7 @@ class UdpBroadcastService : Service() {
     }
 
     override fun onTaskRemoved(rootIntent: Intent?) {
-        Toast.makeText(applicationContext, "Service goodbye", Toast.LENGTH_SHORT).show()
+
         stopSelf()
        /* var builder = NotificationCompat.Builder(this, WIFI_P2P_SERVICE)
                 .setSmallIcon(R.drawable.messager)

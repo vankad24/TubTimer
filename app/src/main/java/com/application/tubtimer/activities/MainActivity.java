@@ -63,7 +63,6 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public boolean onNavigationItemSelected(@NonNull MenuItem item) {
                 tubeFragment.changeFragment(item.getItemId());
-//                getSupportFragmentManager().beginTransaction().replace(R.id.container, tubeFragment).commit();
                 return true;
             }
         });
@@ -73,7 +72,7 @@ public class MainActivity extends AppCompatActivity {
                 .allowMainThreadQueries()
                 .build();
 
-        manager = new DatabaseManager(database.timerDao());
+        manager = new DatabaseManager(this);
 
         intent = new Intent(getApplicationContext(), MyService.class);
         sConn = new ServiceConnection() {
@@ -103,23 +102,28 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         ArrayList<Host> connectedHosts = data.getParcelableArrayListExtra(SearchActivity.DEVICES);
-        int i = data.getIntExtra("int",12);
-        Log.d("my",i+" ");
-        if (connectedHosts!=null&&!connectedHosts.isEmpty()) {
+
+        if (connectedHosts!=null) {
             commandManager.setPeers(new ArraySet<>(connectedHosts));
             Log.d("my","connect");
-//            commandManager.sendAll(); todo
-        }else Log.d("my","empty");
+            Log.d("my",connectedHosts.size()+"");
+//            commandManager.sendAll(); //todo
+        }else Log.d("my","null");
         super.onActivityResult(requestCode, resultCode, data);
     }
 
 
     public void onClick(View view) {
-//        SearchActivity.start(this);
-        Timer timer = tubeFragment.freeTubeAdapter.timers.get(0);
+        SearchActivity.start(this, commandManager.nearConnection==null? null: new ArrayList<>(commandManager.nearConnection.getPeers()));
+        /*Timer timer = tubeFragment.freeTubeAdapter.timers.get(0);
         timer = new Timer(timer.number,timer.duration,timer.duration,Timer.TUBE_IN_REPAIR,false);
         commandManager.getNearConnectListener()
-                .onReceive(new Command(Command.ACTION_CHANGE, timer).getBytes(),null);
+                .onReceive(new Command(Command.ACTION_CHANGE, timer).getBytes(),null);*/
     }
 
+    public void onClick2(View view) {
+        if (commandManager.nearConnection!=null)
+            for (Host host:commandManager.nearConnection.getPeers())
+                commandManager.nearConnection.send(CommandManager.MESSAGE_REQUEST_PING.getBytes(),host);
+    }
 }

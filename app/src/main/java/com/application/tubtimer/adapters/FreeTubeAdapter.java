@@ -28,6 +28,7 @@ public class FreeTubeAdapter extends TubeAdapter {
             @Override
             public boolean onLongClick(View v) {
                 moveToRepair(timer);
+                tubeFragment.commandManager.send(Command.ACTION_CHANGE, timer);
                 return true;
             }
         });

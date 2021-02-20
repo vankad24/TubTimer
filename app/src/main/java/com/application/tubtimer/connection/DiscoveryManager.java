@@ -2,7 +2,6 @@ package com.application.tubtimer.connection;
 
 import android.content.DialogInterface;
 import android.os.Looper;
-import android.provider.Settings;
 import android.view.View;
 import android.widget.Toast;
 
@@ -14,8 +13,6 @@ import com.adroitandroid.near.discovery.NearDiscovery;
 import com.adroitandroid.near.model.Host;
 import com.application.tubtimer.activities.SearchActivity;
 import com.application.tubtimer.adapters.DeviceAdapter;
-import com.application.tubtimer.database.Timer;
-import com.google.gson.Gson;
 
 import java.util.ArrayList;
 import java.util.Set;
@@ -25,28 +22,37 @@ public class DiscoveryManager {
     private static final long DISCOVERY_TIMEOUT_MILLIS = 10000; // вызывается после startDiscovery()
     private static final long DISCOVERABLE_PING_INTERVAL_MILLIS = 5000;
     public static final String MESSAGE_REQUEST_CONNECT = "connect";
-    public static final String MESSAGE_RESPONSE_DECLINE_CONNECT = "decline_request";
+    public static final String MESSAGE_REQUEST_CONNECT_FROM_HOST = "connect_from_host";
+    public static final String MESSAGE_REQUEST_HOST = "are_you_host?";
+
     public static final String MESSAGE_RESPONSE_ACCEPT_CONNECT = "accept_request";
-    public static final String MESSAGE_REQUEST_PING = "ping";
+    public static final String MESSAGE_RESPONSE_NOT_HOST = "not_host";
+    
+    public static final String MESSAGE_DISCONNECT = "disconnect";
 
 
+    public static final String MESSAGE_RESPONSE_DECLINE_CONNECT = "decline_request";
+
+    public static boolean host = false;
+    
     SearchActivity activity;
     public NearDiscovery nearDiscovery;
     private NearConnect nearConnection;
+    
 
-    private boolean mDiscovering;
-
-    public ArrayList<Host> connectedHosts = new ArrayList<>();;
+    public ArrayList<Host> connectedHosts;
     ArrayList<Host> foundHosts = new ArrayList<>();
-    DeviceAdapter adapter;
+    public DeviceAdapter adapter;
 
-    public void setAdapter(DeviceAdapter adapter) {
-        this.adapter = adapter;
-    }
 
     public DiscoveryManager(final SearchActivity activity) {
         this.activity = activity;
-
+        adapter = new DeviceAdapter(activity);
+        
+        connectedHosts = activity.getIntent().getParcelableArrayListExtra(SearchActivity.DEVICES);
+        if (connectedHosts==null)connectedHosts = new ArrayList<>();
+        
+        if (isConnected())activity.button_search.setText("отключиться");
 
         
         new Thread(new Runnable() {
@@ -72,7 +78,11 @@ public class DiscoveryManager {
             }
         }).start();
     }
-
+    
+    public boolean isConnected(){
+        return host||!connectedHosts.isEmpty();
+    }
+    
 
 
 
@@ -87,29 +97,29 @@ public class DiscoveryManager {
             @Override
             public void onPeersUpdate(Set<? extends Host> hosts) {
 
-                activity.bar.setVisibility(View.GONE);
-
-                foundHosts.clear();
                 for (Host host: hosts){
-                    nearConnection.send(MESSAGE_REQUEST_PING.getBytes(),host);
-                    if (!connectedHosts.contains(host)) foundHosts.add(host);
+                    /*nearConnection.send(MESSAGE_REQUEST_PING.getBytes(),host);
+                    try {
+                        Thread.sleep(50);//todo проверить
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }*/
+                    if (!isConnected()&&!connectedHosts.contains(host))
+                        nearConnection.send(MESSAGE_REQUEST_HOST.getBytes(),host);
                 }
-
-                adapter.setData(foundHosts);
+                
             }
 
 
             @Override
             public void onDiscoveryTimeout() {
-//                Toast.makeText(activity, "No other participants found", Toast.LENGTH_SHORT).show();
                 if (foundHosts.isEmpty())Toast.makeText(activity, "Устройства не найдены", Toast.LENGTH_LONG).show();
                 activity.bar.setVisibility(View.GONE);
-                mDiscovering = false;
             }
 
             @Override
             public void onDiscoveryFailure(Throwable e) {
-                Toast.makeText(activity, "Something went wrong while searching for participants", Toast.LENGTH_SHORT).show();
+                Toast.makeText(activity, "Что-то пошло не так", Toast.LENGTH_SHORT).show();
             }
 
             @Override
@@ -128,29 +138,54 @@ public class DiscoveryManager {
                 if (bytes != null) {
                     String message = new String(bytes);
                     switch (message){
-                        case MESSAGE_RESPONSE_ACCEPT_CONNECT:
-                            activity.connectedDevice.setVisibility(View.VISIBLE);
-                            activity.connectedDevice.setText("Подключено к "+sender.getName());
-                            activity.recycler.setVisibility(View.GONE);
-                            connectedHosts.add(sender);
+                        case MESSAGE_REQUEST_HOST:
+                            if (!host&&!foundHosts.contains(sender)){
+                                foundHosts.add(sender);
+                                adapter.setData(foundHosts);
+                                nearConnection.send(MESSAGE_RESPONSE_NOT_HOST.getBytes(), sender);
+                            }
                             break;
+                        case MESSAGE_RESPONSE_NOT_HOST:
+                            if (isConnected())break;
+                            if (!foundHosts.contains(sender)) {
+                                foundHosts.add(sender);
+                                adapter.setData(foundHosts);
+                                nearConnection.send(MESSAGE_RESPONSE_NOT_HOST.getBytes(), sender);
+                            }
+                            break;
+                            
+                            
                         case MESSAGE_REQUEST_CONNECT:
                             new AlertDialog.Builder(activity)
                                     .setMessage(sender.getName() + " хочет подключиться к вам")
                                     .setPositiveButton("Да", new DialogInterface.OnClickListener() {
                                         @Override
                                         public void onClick(DialogInterface dialog, int which) {
-                                            nearConnection.send(MESSAGE_RESPONSE_ACCEPT_CONNECT.getBytes(), sender);
-                                            connectedHosts.add(sender);
-                                            //todo подключённые устройства
+                                            nearConnection.send(MESSAGE_REQUEST_CONNECT_FROM_HOST.getBytes(), sender);
                                         }
                                     })
-                                    .setNegativeButton("Нет", new DialogInterface.OnClickListener() {
-                                        @Override
-                                        public void onClick(DialogInterface dialog, int which) {
+                                    .setNegativeButton("Нет", null).create().show();
+                            break;
+                        case MESSAGE_REQUEST_CONNECT_FROM_HOST:
+                            if (isConnected())break;
+                            nearConnection.send(MESSAGE_RESPONSE_ACCEPT_CONNECT.getBytes(), sender);
+                            activity.recycler.setVisibility(View.GONE);
+                            activity.connectedDevice.setVisibility(View.VISIBLE);
+                            activity.connectedDevice.setText("Подключено к "+sender.getName());
 
-                                        }
-                                    }).create().show();
+                            connectedHosts.add(sender);
+                            activity.button_search.setText("отключиться");
+                            break;
+                        case MESSAGE_RESPONSE_ACCEPT_CONNECT:
+                            host = true;
+                            connectedHosts.add(sender);
+                            activity.button_search.setText("отключиться");
+                            adapter.setData(connectedHosts);
+                            break;
+                            
+                        case MESSAGE_DISCONNECT:
+                            connectedHosts.remove(sender);
+                            disconnect();
                             break;
                     }
                 }
@@ -184,10 +219,22 @@ public class DiscoveryManager {
     }
 
     public void start(String name){
-        nearDiscovery.makeDiscoverable(name,"");
+        foundHosts.clear();
+        if (!nearDiscovery.isDiscoverable())nearDiscovery.makeDiscoverable(name,"");
         nearDiscovery.startDiscovery();
         if (!nearConnection.isReceiving()) {
             nearConnection.startReceiving();
         }
+    }
+
+    public void disconnect() {
+        activity.button_search.setText("поиск");
+        activity.recycler.setVisibility(View.VISIBLE);
+        activity.connectedDevice.setVisibility(View.GONE);
+        host = false;
+        for (Host host: connectedHosts)
+            nearConnection.send(MESSAGE_DISCONNECT.getBytes(), host);
+        connectedHosts.clear();
+        adapter.setData(foundHosts);
     }
 }

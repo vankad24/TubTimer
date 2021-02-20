@@ -37,6 +37,7 @@ public class RepairTubeAdapter extends TubeAdapter {
                                 }
                                 timer.stop();
                                 manager.update(timer);
+                                tubeFragment.commandManager.send(Command.ACTION_CHANGE, timer);
                             }
                         })
                         .setNegativeButton("Нет", null).create().show();
