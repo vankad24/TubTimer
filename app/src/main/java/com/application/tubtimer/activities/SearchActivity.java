@@ -68,11 +68,10 @@ public class SearchActivity extends AppCompatActivity {
         discoveryManager.stop();
         Intent intent = new Intent(this,MainActivity.class);
         intent.putParcelableArrayListExtra(DEVICES, discoveryManager.connectedHosts);
-        intent.putExtra("int",24);//todo remove
         finishActivity(1);
         setResult(RESULT_OK, intent);
         finish();
-//        super.onBackPressed();
+
     }
 
     @Override

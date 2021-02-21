@@ -82,20 +82,13 @@ public class Timer{
         downTimer.cancel();
     }
 
-    public String getStringData(){
-       /* Gson gson = new GsonBuilder()
-                .excludeFieldsWithoutExposeAnnotation().create();*/
-        Gson gson = new Gson();
-        return gson.toJson(this, Timer.class);
-    }
-
     public String getTimeString(){
         return getTimeString(time_left);
     }
 
     public static String getTimeString(int time){
         String time_string="";
-        int t = (time / 3600)%24;
+        int t = time / 3600;
         if (t!=0)time_string+=t +"ч ";
         t =(time / 60) % 60;
         if (t!=0)time_string+=t+"мин ";

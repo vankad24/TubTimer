@@ -107,7 +107,7 @@ public class MainActivity extends AppCompatActivity {
             commandManager.setPeers(new ArraySet<>(connectedHosts));
             Log.d("my","connect");
             Log.d("my",connectedHosts.size()+"");
-//            commandManager.sendAll(); //todo
+            commandManager.sendAll();
         }else Log.d("my","null");
         super.onActivityResult(requestCode, resultCode, data);
     }
@@ -115,15 +115,26 @@ public class MainActivity extends AppCompatActivity {
 
     public void onClick(View view) {
         SearchActivity.start(this, commandManager.nearConnection==null? null: new ArrayList<>(commandManager.nearConnection.getPeers()));
-        /*Timer timer = tubeFragment.freeTubeAdapter.timers.get(0);
-        timer = new Timer(timer.number,timer.duration,timer.duration,Timer.TUBE_IN_REPAIR,false);
-        commandManager.getNearConnectListener()
-                .onReceive(new Command(Command.ACTION_CHANGE, timer).getBytes(),null);*/
+
     }
 
     public void onClick2(View view) {
         if (commandManager.nearConnection!=null)
             for (Host host:commandManager.nearConnection.getPeers())
                 commandManager.nearConnection.send(CommandManager.MESSAGE_REQUEST_PING.getBytes(),host);
+//        commandManager.sendAll();
+       /* Timer timer = tubeFragment.repairTubeAdapter.timers.get(0);
+        timer = new Timer(timer.number,timer.duration,timer.duration,timer.type,false);
+
+        commandManager.getNearConnectListener()
+                .onReceive(new Command(Command.ACTION_DELETE, timer).getBytes(),null);*/
+    }
+
+    @Override
+    protected void onDestroy() {
+        for(Timer timer:manager.getByType(Timer.TUBE_ON_TRACK))
+            manager.dao.update(timer);
+
+        super.onDestroy();
     }
 }

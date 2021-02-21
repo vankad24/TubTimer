@@ -32,9 +32,6 @@ public abstract class TubeAdapter extends RecyclerView.Adapter<TubeAdapter.TubeV
         manager = tubeFragment.manager;
         recycler = tubeFragment.recycler;
         this.type = type;
-
-
-
     }
 
     @NonNull

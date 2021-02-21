@@ -98,12 +98,6 @@ public class DiscoveryManager {
             public void onPeersUpdate(Set<? extends Host> hosts) {
 
                 for (Host host: hosts){
-                    /*nearConnection.send(MESSAGE_REQUEST_PING.getBytes(),host);
-                    try {
-                        Thread.sleep(50);//todo проверить
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }*/
                     if (!isConnected()&&!connectedHosts.contains(host))
                         nearConnection.send(MESSAGE_REQUEST_HOST.getBytes(),host);
                 }
@@ -139,7 +133,7 @@ public class DiscoveryManager {
                     String message = new String(bytes);
                     switch (message){
                         case MESSAGE_REQUEST_HOST:
-                            if (!host&&!foundHosts.contains(sender)){
+                            if (!foundHosts.contains(sender)){
                                 foundHosts.add(sender);
                                 adapter.setData(foundHosts);
                                 nearConnection.send(MESSAGE_RESPONSE_NOT_HOST.getBytes(), sender);

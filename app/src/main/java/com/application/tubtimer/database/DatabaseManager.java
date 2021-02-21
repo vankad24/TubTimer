@@ -9,7 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class DatabaseManager{
-    TimerDao dao;
+    public TimerDao dao;
     private ArrayList<Timer> track;
     private ArrayList<Timer> free;
     private ArrayList<Timer> repair;
@@ -43,23 +43,38 @@ public class DatabaseManager{
     }
 
 
-    public void change(Timer timer, TubeAdapter activeAdapter){
+    public void change(final Timer timer, TubeAdapter activeAdapter){
         for (int i = 0; i < 3; i++) {
             ArrayList<Timer> list = getByType(i);
             for (int j = 0; j < list.size(); j++) {
                 Timer t = list.get(j);
-                if (t.number==timer.number){
+                if (t.number==timer.number) {
                     Log.d("my", "change tube " + t.number);
-                    if (timer.type == Timer.TUBE_IN_REPAIR)activeAdapter.moveToRepair(t);
+                    if (timer.type == t.type)
+                        list.set(j, timer);
+                    else if (timer.type == Timer.TUBE_IN_REPAIR) activeAdapter.moveToRepair(t);
                     else {
-                        if (timer.type==t.type)
-                            list.set(j, timer);
-                        else list.remove(t);
-
-                        if (timer.activated) activeAdapter.startTimer(timer);
-                        else activeAdapter.stopTimer(timer);
-                        activeAdapter.notifyDataSetChanged();
+                        list.remove(t);
+                        if (t.type == Timer.TUBE_IN_REPAIR)update(timer);
                     }
+
+                    if (timer.activated) {
+                        activeAdapter.startTimer(timer);
+                        timer.setOnTickListener(new Timer.TickListener() {
+                            @Override
+                            public void onTick(int secondsUntilFinished) {
+
+                            }
+
+                            @Override
+                            public void onFinish() {
+                                main.tubeFragment.trackTubeAdapter.finishTimer(timer);
+                            }
+                        });
+                    } else if (t.type == Timer.TUBE_ON_TRACK) activeAdapter.stopTimer(t);
+
+                    activeAdapter.notifyDataSetChanged();
+                    dao.update(timer);
                     return;
                 }
             }
@@ -110,8 +125,12 @@ public class DatabaseManager{
         for (Timer timer:free)dao.insert(timer);
         for (Timer timer:repair)dao.insert(timer);
 
-        this.track = track;
-        this.free = free;
-        this.repair = repair;
+        for (Timer timer:this.track)timer.stop();
+        this.track.clear();
+        this.free.clear();
+        this.repair.clear();
+        this.track.addAll(track);
+        this.free.addAll(free);
+        this.repair.addAll(repair);
     }
 }

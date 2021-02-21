@@ -50,13 +50,17 @@ public class TrackTubeAdapter extends TubeAdapter {
 
             @Override
             public void onFinish() {
-                Toast.makeText(holder.timerView.getContext(),"Время вышло",Toast.LENGTH_SHORT).show();
                 holder.timerView.setText(timer.getTimeString());
-                tubeFragment.main.myService.sendNotification("Время для тюба номер "+timer.number+" вышло!");
-                stopTimer(timer);
+                finishTimer(timer);
             }
         });
 
+    }
+
+    public void finishTimer(Timer timer){
+        Toast.makeText(tubeFragment.getActivity().getApplicationContext(),"Время вышло",Toast.LENGTH_SHORT).show();
+        tubeFragment.main.myService.sendNotification("Время для тюба номер "+timer.number+" вышло!");
+        stopTimer(timer);
     }
 
 
