@@ -56,9 +56,7 @@ public class FreeTubeAdapter extends TubeAdapter {
 
             @Override
             public void onFinish() {
-                Toast.makeText(holder.timerView.getContext(),"Время вышло",Toast.LENGTH_SHORT).show();
-                tubeFragment.main.myService.sendNotification("Время для тюба номер "+timer.number+" вышло!");
-                stopTimer(timer);
+                tubeFragment.trackTubeAdapter.finishTimer(timer);
             }
         });
     }

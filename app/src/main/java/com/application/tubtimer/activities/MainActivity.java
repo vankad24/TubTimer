@@ -107,6 +107,7 @@ public class MainActivity extends AppCompatActivity {
             commandManager.setPeers(new ArraySet<>(connectedHosts));
             Log.d("my","connect");
             Log.d("my",connectedHosts.size()+"");
+            commandManager.requestUpdateAll();
             commandManager.sendAll();
         }else Log.d("my","null");
         super.onActivityResult(requestCode, resultCode, data);

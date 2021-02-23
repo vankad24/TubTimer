@@ -20,7 +20,8 @@ import java.util.ArrayList;
 
 public class CommandManager {
 
-    public final static String  UPDATE_ALL = "$update";
+    public final static String UPDATE_ALL = "$update";
+    public final static String REQUEST_UPDATE_ALL = "request_update";
     public static final String MESSAGE_REQUEST_PING = "ping";
 
     MainActivity main;
@@ -31,17 +32,12 @@ public class CommandManager {
     }
 
     public void setPeers(final ArraySet<Host> peers){
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                nearConnection = new NearConnect.Builder()
-                        .forPeers(peers)
-                        .setContext(main.getApplicationContext())
-                        .setListener(getNearConnectListener(), Looper.getMainLooper()).build();
+        nearConnection = new NearConnect.Builder()
+                .forPeers(peers)
+                .setContext(main.getApplicationContext())
+                .setListener(getNearConnectListener(), Looper.getMainLooper()).build();
 
-                nearConnection.startReceiving();
-            }
-        }).start();
+        nearConnection.startReceiving();
     }
 
     @NonNull
@@ -90,6 +86,9 @@ public class CommandManager {
                         case MESSAGE_REQUEST_PING:
                             Toast.makeText(main.getApplicationContext(),"Ping", Toast.LENGTH_SHORT).show();
                             break;
+                        case REQUEST_UPDATE_ALL:
+                            sendAll();
+                            break;
                     }
                 }catch (Exception e){
                     e.printStackTrace();
@@ -114,6 +113,11 @@ public class CommandManager {
         };
     }
 
+    public void requestUpdateAll(){
+        if (!DiscoveryManager.host)
+            for (Host host: nearConnection.getPeers())
+                nearConnection.send(REQUEST_UPDATE_ALL.getBytes(),host);
+    }
 
     public void send(int action , Timer timer){
         if(nearConnection==null/*||!DiscoveryManager.host*/){
@@ -154,11 +158,27 @@ public class CommandManager {
             return gson.toJson(this, UpdateAllHelper.class);
         }
 
-        static void updateAllAdapters(MainActivity main, String data){
-            UpdateAllHelper helper = gson.fromJson(data,UpdateAllHelper.class);
+        static void updateAllAdapters(final MainActivity main, String data){
+            UpdateAllHelper helper = gson.fromJson(data, UpdateAllHelper.class);
             main.manager.setLists(helper.track, helper.free, helper.repair);
 
-            main.tubeFragment.recycler.getAdapter().notifyDataSetChanged();
+            for (final Timer timer:helper.track){
+                timer.setOnTickListener(new Timer.TickListener() {
+                    @Override
+                    public void onTick(int secondsUntilFinished) {
+                    }
+
+                    @Override
+                    public void onFinish() {
+                        main.tubeFragment.trackTubeAdapter.finishTimer(timer);
+                    }
+                });
+                timer.start();
+            }
+
+            TubeAdapter adapter = (TubeAdapter) main.tubeFragment.recycler.getAdapter();
+            adapter.notifyDataSetChanged();
+            adapter.checkEmpty();
         }
     }
 }
