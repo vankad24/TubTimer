@@ -2,6 +2,7 @@ package com.application.tubtimer.adapters;
 
 import android.content.DialogInterface;
 import android.graphics.Color;
+import android.util.Log;
 import android.view.View;
 import android.widget.Toast;
 
@@ -20,8 +21,7 @@ public class TrackTubeAdapter extends TubeAdapter {
     @Override
     public void onBindViewHolder(@NonNull final TubeViewHolder holder, int position) {
         final Timer timer = timers.get(holder.getAdapterPosition());
-        holder.timerView.setText(timer.getTimeString());
-        holder.tvNumber.setText(timer.number+"");
+        init(holder,timer,false);
 
         int color = Color.BLACK;
         if (!timer.activated)color = Color.RED;
@@ -32,7 +32,8 @@ public class TrackTubeAdapter extends TubeAdapter {
             @Override
             public void onClick(View v) {
                 if (!timer.activated){
-                    stopTimer(timer);
+                    if (tubeFragment.commandManager.canChangeTimers())stopTimer(timer);
+                    else Toast.makeText(tubeFragment.main,"Запрос отправлен", Toast.LENGTH_SHORT).show();
                     tubeFragment.commandManager.send(Command.ACTION_CHANGE, timer);
                 } else
                     new AlertDialog.Builder(holder.itemView.getContext())
@@ -40,10 +41,9 @@ public class TrackTubeAdapter extends TubeAdapter {
                             .setPositiveButton("Да", new DialogInterface.OnClickListener() {
                                 @Override
                                 public void onClick(DialogInterface dialog, int which) {
-                                    if (timer.activated){
-                                        stopTimer(timer);
-                                        tubeFragment.commandManager.send(Command.ACTION_CHANGE, timer);
-                                    }
+                                    stopTimer(timer);
+                                    tubeFragment.commandManager.send(Command.ACTION_CHANGE, timer);
+
                                 }
                             })
                             .setNegativeButton("Нет", null).create().show();
@@ -60,7 +60,11 @@ public class TrackTubeAdapter extends TubeAdapter {
             @Override
             public void onFinish() {
                 holder.timerView.setText(timer.getTimeString());
-                finishTimer(timer);
+                try{
+                    finishTimer(timer);
+                }catch (Exception e){
+                    e.printStackTrace();
+                }
                 holder.tvNumber.setTextColor(Color.RED);
                 holder.timerView.setTextColor(Color.RED);
             }
@@ -73,12 +77,11 @@ public class TrackTubeAdapter extends TubeAdapter {
         tubeFragment.main.myService.sendNotification("Время для тюба номер "+timer.number+" вышло!");
         int position = tubeFragment.trackTubeAdapter.timers.indexOf(timer);
         if (position>0) {
-                tubeFragment.trackTubeAdapter.timers.remove(position);
-                tubeFragment.trackTubeAdapter.notifyItemRemoved(position);
-                recycler.smoothScrollToPosition(0);
-                tubeFragment.trackTubeAdapter.timers.add(0,timer);
-                tubeFragment.trackTubeAdapter.notifyItemInserted(0);
-
+            tubeFragment.trackTubeAdapter.timers.remove(position);
+            tubeFragment.trackTubeAdapter.notifyItemRemoved(position);
+            tubeFragment.trackTubeAdapter.timers.add(0,timer);
+            tubeFragment.trackTubeAdapter.notifyItemInserted(0);
+            recycler.smoothScrollToPosition(0);
         }
 
     }

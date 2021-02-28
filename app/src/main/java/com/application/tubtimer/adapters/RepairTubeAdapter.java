@@ -19,8 +19,7 @@ public class RepairTubeAdapter extends TubeAdapter {
     @Override
     public void onBindViewHolder(@NonNull final TubeViewHolder holder, int position) {
         final Timer timer = timers.get(holder.getAdapterPosition());
-        holder.timerView.setText(timer.getTimeString());
-        holder.tvNumber.setText(timer.number+"");
+        init(holder,timer,false);
 
         holder.itemView.setOnClickListener(new View.OnClickListener() {
             @Override

@@ -7,6 +7,7 @@ public class Command {
     public static final int ACTION_ADD = 0;
     public static final int ACTION_DELETE = 1;
     public static final int ACTION_CHANGE = 2;
+    public static final int ACTION_STOP = 3;
 
     static Gson gson = new Gson();
 

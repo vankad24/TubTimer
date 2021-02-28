@@ -6,53 +6,46 @@
 
 
     <LinearLayout
-        android:layout_width="match_parent"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:id="@+id/linear_add"
-        android:visibility="gone">
+        android:visibility="visible"
+        android:layout_gravity="center">
 
         <EditText
             android:id="@+id/tub_number"
-            android:layout_width="match_parent"
+            android:layout_width="70sp"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
             android:ems="10"
             android:inputType="number" />
 
-        <EditText
-            android:id="@+id/duration"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:ems="10"
-            android:inputType="time" />
-
         <Button
-            android:layout_width="wrap_content"
+            android:layout_width="50dp"
             android:layout_gravity="center"
             android:layout_height="wrap_content"
-            android:text="Add"
+            android:background="@drawable/ic_check"
             android:id="@+id/startBtn"/>
 
     </LinearLayout>
 
     <Button
+        android:id="@+id/show_add"
+        style="@style/Widget.AppCompat.Button.Colored"
         android:layout_width="wrap_content"
-        android:layout_gravity="center"
         android:layout_height="wrap_content"
-        android:text="show"
-        android:id="@+id/show_add"/>
+        android:layout_gravity="center"
+        android:text="Показать" />
 
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="center"
         android:layout_marginTop="30sp"
-        android:textSize="30sp"
+        android:textSize="20sp"
         android:id="@+id/empty_list"
         android:text="@string/empty"
-        android:textColor="#000"
+        android:textColor="@android:color/darker_gray"
         android:visibility="gone"/>
 
 

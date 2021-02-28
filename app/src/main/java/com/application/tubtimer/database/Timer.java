@@ -6,7 +6,6 @@ import androidx.room.Entity;
 import androidx.room.Ignore;
 import androidx.room.PrimaryKey;
 
-import com.google.gson.Gson;
 
 @Entity
 public class Timer{
@@ -24,8 +23,8 @@ public class Timer{
     public int time_left;
     public int type;
     public boolean activated;
-
-
+    @Ignore
+    boolean tick;
 
     public void setOnTickListener(TickListener listener) {
         this.listener = listener;
@@ -57,7 +56,7 @@ public class Timer{
             @Override
             public void onTick(long millisUntilFinished) {
                 time_left = (int) (millisUntilFinished/1000);
-                if (listener!=null)listener.onTick(time_left);
+                if (listener!=null&&tick)listener.onTick(time_left);
             }
 
             @Override
@@ -80,6 +79,15 @@ public class Timer{
     public void pause(){
         activated = false;
         downTimer.cancel();
+    }
+
+    public void setTime(int sec){
+        duration = sec;
+        time_left = sec;
+    }
+
+    public void setTick(boolean tick) {
+        this.tick = tick;
     }
 
     public String getTimeString(){

@@ -65,8 +65,8 @@ public class SearchActivity extends AppCompatActivity {
     @Override
     public void onBackPressed() {
         bar.setVisibility(View.GONE);
-        discoveryManager.stop();
-        Intent intent = new Intent(this,MainActivity.class);
+//        discoveryManager.stop();
+        Intent intent = new Intent(this, MainActivity.class);
         intent.putParcelableArrayListExtra(DEVICES, discoveryManager.connectedHosts);
         finishActivity(1);
         setResult(RESULT_OK, intent);

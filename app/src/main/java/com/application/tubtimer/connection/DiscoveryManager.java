@@ -29,18 +29,18 @@ public class DiscoveryManager {
     public static final String MESSAGE_RESPONSE_NOT_HOST = "not_host";
     
     public static final String MESSAGE_DISCONNECT = "disconnect";
-
+    public static final String MESSAGE_REQUEST_PING = "ping";
 
     public static final String MESSAGE_RESPONSE_DECLINE_CONNECT = "decline_request";
 
     public static boolean host = false;
     
     SearchActivity activity;
-    public NearDiscovery nearDiscovery;
-    private NearConnect nearConnection;
+    public static NearDiscovery nearDiscovery;
+    public static NearConnect nearConnection;
     
 
-    public ArrayList<Host> connectedHosts;
+    public static ArrayList<Host> connectedHosts;
     ArrayList<Host> foundHosts = new ArrayList<>();
     public DeviceAdapter adapter;
 
@@ -49,34 +49,27 @@ public class DiscoveryManager {
         this.activity = activity;
         adapter = new DeviceAdapter(activity);
         
-        connectedHosts = activity.getIntent().getParcelableArrayListExtra(SearchActivity.DEVICES);
+//        connectedHosts = activity.getIntent().getParcelableArrayListExtra(SearchActivity.DEVICES);
         if (connectedHosts==null)connectedHosts = new ArrayList<>();
         
         if (isConnected())activity.button_search.setText("отключиться");
 
-        
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    nearDiscovery = new NearDiscovery.Builder()
-                            .setContext(activity.getApplicationContext())
-                            .setDiscoverableTimeoutMillis(DISCOVERABLE_TIMEOUT_MILLIS)
-                            .setDiscoveryTimeoutMillis(DISCOVERY_TIMEOUT_MILLIS)
-                            .setDiscoverablePingIntervalMillis(DISCOVERABLE_PING_INTERVAL_MILLIS)
-                            .setDiscoveryListener(getNearDiscoveryListener(), Looper.getMainLooper())
-                            .build();
 
-                    nearConnection = new NearConnect.Builder()
-                            .fromDiscovery(nearDiscovery)
-                            .setContext(activity.getApplicationContext())
-                            .setListener(getNearConnectListener(), Looper.getMainLooper())
-                            .build();
-                }catch (Exception e){
-                    e.printStackTrace();
-                }
-            }
-        }).start();
+        if (nearDiscovery==null)
+            nearDiscovery = new NearDiscovery.Builder()
+                    .setContext(activity.getApplicationContext())
+                    .setDiscoverableTimeoutMillis(DISCOVERABLE_TIMEOUT_MILLIS)
+                    .setDiscoveryTimeoutMillis(DISCOVERY_TIMEOUT_MILLIS)
+                    .setDiscoverablePingIntervalMillis(DISCOVERABLE_PING_INTERVAL_MILLIS)
+                    .setDiscoveryListener(getNearDiscoveryListener(), Looper.getMainLooper())
+                    .build();
+        if (nearConnection==null)
+            nearConnection = new NearConnect.Builder()
+                    .fromDiscovery(nearDiscovery)
+                    .setContext(activity.getApplicationContext())
+                    .setListener(getNearConnectListener(), Looper.getMainLooper())
+                    .build();
+
     }
     
     public boolean isConnected(){
@@ -180,6 +173,9 @@ public class DiscoveryManager {
                         case MESSAGE_DISCONNECT:
                             connectedHosts.remove(sender);
                             disconnect();
+                            break;
+                        case MESSAGE_REQUEST_PING:
+//                            Toast.makeText(activity.getApplicationContext(),"Ping", Toast.LENGTH_SHORT).show();
                             break;
                     }
                 }

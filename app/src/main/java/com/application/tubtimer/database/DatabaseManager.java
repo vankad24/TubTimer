@@ -6,6 +6,7 @@ import com.application.tubtimer.activities.MainActivity;
 import com.application.tubtimer.adapters.TubeAdapter;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 public class DatabaseManager{
@@ -109,7 +110,17 @@ public class DatabaseManager{
                 if (free==null)free = (ArrayList<Timer>) dao.getByType(Timer.TUBE_FREE);
                 return free;
             case Timer.TUBE_ON_TRACK:
-                if (track==null)track = (ArrayList<Timer>) dao.getByType(Timer.TUBE_ON_TRACK);
+                if (track==null){
+                    track = (ArrayList<Timer>) dao.getByType(Timer.TUBE_ON_TRACK);
+                    track.sort(new Comparator<Timer>() {
+                        @Override
+                        public int compare(Timer o1, Timer o2) {
+                            if (!o1.activated)return -1;
+                            if (!o2.activated)return 1;
+                            return 0;
+                        }
+                    });
+                }
                 return track;
             case Timer.TUBE_IN_REPAIR:
                 if (repair==null)repair = (ArrayList<Timer>) dao.getByType(Timer.TUBE_IN_REPAIR);

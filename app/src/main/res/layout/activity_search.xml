@@ -5,12 +5,13 @@
     android:orientation="vertical">
 
     <Button
+        android:id="@+id/search"
+        style="@style/Widget.AppCompat.Button.Colored"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="поиск"
-        android:id="@+id/search"
+        android:layout_gravity="center"
         android:layout_marginTop="20sp"
-        android:layout_gravity="center"/>
+        android:text="поиск" />
 
     <ProgressBar
         android:layout_width="100sp"

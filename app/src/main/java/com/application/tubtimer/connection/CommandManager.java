@@ -1,10 +1,12 @@
 package com.application.tubtimer.connection;
 
+import android.content.DialogInterface;
 import android.os.Looper;
 import android.util.Log;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
 import androidx.collection.ArraySet;
 
 import com.adroitandroid.near.connect.NearConnect;
@@ -22,10 +24,15 @@ public class CommandManager {
 
     public final static String UPDATE_ALL = "$update";
     public final static String REQUEST_UPDATE_ALL = "request_update";
+    public final static String REQUEST_DELETE = "request_update";
     public static final String MESSAGE_REQUEST_PING = "ping";
 
     MainActivity main;
     public NearConnect nearConnection;
+
+    public void setNearConnection(NearConnect nearConnection) {
+        this.nearConnection = nearConnection;
+    }
 
     public CommandManager(MainActivity main) {
         this.main = main;
@@ -36,7 +43,6 @@ public class CommandManager {
                 .forPeers(peers)
                 .setContext(main.getApplicationContext())
                 .setListener(getNearConnectListener(), Looper.getMainLooper()).build();
-
         nearConnection.startReceiving();
     }
 
@@ -49,34 +55,59 @@ public class CommandManager {
                     String message = new String(bytes);
                     Log.d("my", "receive " + message);
                     if (message.startsWith("&")) {
-                        Command command = Command.parseCommand(message);
-                        TubeAdapter activeAdapter = (TubeAdapter) main.tubeFragment.recycler.getAdapter();
+                        final Command command = Command.parseCommand(message);
+                        final TubeAdapter activeAdapter = (TubeAdapter) main.tubeFragment.recycler.getAdapter();
                         switch (command.action) {
                             case Command.ACTION_ADD:
-                                if (main.manager.timerNotExist(command.timer)) {
-                                    main.manager.insert(command.timer);
-                                    if (command.timer.type == activeAdapter.type)
-                                        activeAdapter.notifyItemInserted(0);
+                                if (DiscoveryManager.host) {
+                                    new AlertDialog.Builder(main)
+                                            .setMessage(sender.getName() + " хочет запустить таймер №" + command.timer.number)
+                                            .setPositiveButton("Да", new DialogInterface.OnClickListener() {
+                                                @Override
+                                                public void onClick(DialogInterface dialog, int which) {
+                                                    if (main.manager.timerNotExist(command.timer)) {
+                                                        main.manager.insert(command.timer);
+                                                        if (command.timer.type == activeAdapter.type)
+                                                            activeAdapter.notifyItemInserted(0);
+                                                    }
+                                                    send(Command.ACTION_ADD, command.timer);
+                                                }
+                                            })
+                                            .setNegativeButton("Нет", null).create().show();
+                                }else {
+                                    if (main.manager.timerNotExist(command.timer)) {
+                                        main.manager.insert(command.timer);
+                                        if (command.timer.type == activeAdapter.type)
+                                            activeAdapter.notifyItemInserted(0);
+                                    }
                                 }
                                 break;
                             case Command.ACTION_CHANGE:
                                 main.manager.change(command.timer, activeAdapter);
                                 break;
+                            case Command.ACTION_STOP:
+//                                main.manager.change(command.timer , activeAdapter);todo
+                                break;
                             case Command.ACTION_DELETE:
-                                main.manager.delete(command.timer);
-                                out:
-                                for (int i = 0; i < 3; i++) {
-                                    ArrayList<Timer> list = main.manager.getByType(i);
-                                    for (int j = 0; j < list.size(); j++) {
-                                        Timer t = list.get(j);
-                                        if (t.number==command.timer.number){
-                                            t.stop();
-                                            list.remove(j);
-                                            break out;
-                                        }
-                                    }
+
+                                if (DiscoveryManager.host){
+                                    new AlertDialog.Builder(main)
+                                            .setMessage(sender.getName()+" хочет удалить таймер №"+command.timer.number)
+                                            .setPositiveButton("Да", new DialogInterface.OnClickListener() {
+                                                @Override
+                                                public void onClick(DialogInterface dialog, int which) {
+                                                    delete(command.timer);
+                                                    send(Command.ACTION_DELETE,command.timer);
+                                                    activeAdapter.notifyDataSetChanged();
+                                                }
+                                            })
+                                            .setNegativeButton("Нет", null).create().show();
+                                }else {
+                                    delete(command.timer);
+                                    activeAdapter.notifyDataSetChanged();
                                 }
-                                activeAdapter.notifyDataSetChanged();
+
+
                                 break;
                         }
                     } else if (message.startsWith(UPDATE_ALL)) {
@@ -89,6 +120,7 @@ public class CommandManager {
                         case REQUEST_UPDATE_ALL:
                             sendAll();
                             break;
+
                     }
                 }catch (Exception e){
                     e.printStackTrace();
@@ -113,11 +145,40 @@ public class CommandManager {
         };
     }
 
+    public boolean canChangeTimers(){
+        return DiscoveryManager.host||nearConnection==null||DiscoveryManager.connectedHosts.size()==0;
+    }
+
+    void delete(Timer timer){
+        main.manager.delete(timer);
+        out:
+        for (int i = 0; i < 3; i++) {
+            ArrayList<Timer> list = main.manager.getByType(i);
+            for (int j = 0; j < list.size(); j++) {
+                Timer t = list.get(j);
+                if (t.number==timer.number){
+                    t.stop();
+                    list.remove(j);
+                    break out;
+                }
+            }
+        }
+    }
+
     public void requestUpdateAll(){
         if (!DiscoveryManager.host)
-            for (Host host: nearConnection.getPeers())
+            for (Host host: DiscoveryManager.connectedHosts)
                 nearConnection.send(REQUEST_UPDATE_ALL.getBytes(),host);
     }
+
+    public void notifyAllHosts(){
+        setNearConnection(DiscoveryManager.nearConnection);
+        nearConnection.setListener(getNearConnectListener());
+        requestUpdateAll();
+        sendAll();
+
+    }
+
 
     public void send(int action , Timer timer){
         if(nearConnection==null/*||!DiscoveryManager.host*/){
@@ -127,9 +188,10 @@ public class CommandManager {
         Log.d("my","send continue");
 
         byte[] bytes = new Command(action, timer).getBytes();
-        for (Host host: nearConnection.getPeers()) {
+        for (Host host: DiscoveryManager.connectedHosts) {
             nearConnection.send(bytes, host);
         }
+        
     }
 
     public void sendAll(){
@@ -137,7 +199,7 @@ public class CommandManager {
         byte[] bytes =(UPDATE_ALL+new UpdateAllHelper(main.manager.getByType(Timer.TUBE_ON_TRACK),
                 main.manager.getByType(Timer.TUBE_FREE),main.manager.getByType(Timer.TUBE_IN_REPAIR))
                 .getData()).getBytes();
-        for (Host host: nearConnection.getPeers()) {
+        for (Host host: DiscoveryManager.connectedHosts) {
             nearConnection.send(bytes, host);
         }
     }
@@ -173,7 +235,7 @@ public class CommandManager {
                         main.tubeFragment.trackTubeAdapter.finishTimer(timer);
                     }
                 });
-                timer.start();
+                if (timer.activated)timer.start();
             }
 
             TubeAdapter adapter = (TubeAdapter) main.tubeFragment.recycler.getAdapter();

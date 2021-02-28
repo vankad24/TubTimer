@@ -9,9 +9,12 @@ import com.adroitandroid.near.model.Host
 interface NearConnect {
     fun send(bytes: ByteArray, peer: Host): Long
     fun startReceiving()
+    fun setListener(listener: Listener)
     fun stopReceiving(abortCurrentTransfers: Boolean)
     val peers: Set<Host>
     val isReceiving: Boolean
+
+
 
     class Builder {
         private lateinit var mContext: Context

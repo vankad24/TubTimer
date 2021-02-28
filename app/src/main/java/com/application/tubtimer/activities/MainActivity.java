@@ -10,6 +10,7 @@ import android.os.Bundle;
 import android.os.IBinder;
 import android.os.Looper;
 import android.util.Log;
+import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
@@ -27,6 +28,7 @@ import com.application.tubtimer.R;
 import com.application.tubtimer.adapters.TubeAdapter;
 import com.application.tubtimer.connection.Command;
 import com.application.tubtimer.connection.CommandManager;
+import com.application.tubtimer.connection.DiscoveryManager;
 import com.application.tubtimer.database.AppDatabase;
 import com.application.tubtimer.database.DatabaseManager;
 import com.application.tubtimer.database.Timer;
@@ -103,12 +105,13 @@ public class MainActivity extends AppCompatActivity {
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         ArrayList<Host> connectedHosts = data.getParcelableArrayListExtra(SearchActivity.DEVICES);
 
+
+        commandManager.notifyAllHosts();
         if (connectedHosts!=null) {
-            commandManager.setPeers(new ArraySet<>(connectedHosts));
+//            commandManager.setPeers(new ArraySet<>(connectedHosts));
             Log.d("my","connect");
             Log.d("my",connectedHosts.size()+"");
-            commandManager.requestUpdateAll();
-            commandManager.sendAll();
+
         }else Log.d("my","null");
         super.onActivityResult(requestCode, resultCode, data);
     }
@@ -121,8 +124,11 @@ public class MainActivity extends AppCompatActivity {
 
     public void onClick2(View view) {
         if (commandManager.nearConnection!=null)
-            for (Host host:commandManager.nearConnection.getPeers())
-                commandManager.nearConnection.send(CommandManager.MESSAGE_REQUEST_PING.getBytes(),host);
+            for (Host host:commandManager.nearConnection.getPeers()) {
+                commandManager.nearConnection.send(CommandManager.MESSAGE_REQUEST_PING.getBytes(), host);
+                Log.d("my",commandManager.nearConnection.getPeers().size()+"");
+
+            }
 //        commandManager.sendAll();
        /* Timer timer = tubeFragment.repairTubeAdapter.timers.get(0);
         timer = new Timer(timer.number,timer.duration,timer.duration,timer.type,false);
@@ -133,9 +139,42 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onDestroy() {
-        for(Timer timer:manager.getByType(Timer.TUBE_ON_TRACK))
+        for(Timer timer:manager.getByType(Timer.TUBE_ON_TRACK)) {
             manager.dao.update(timer);
-
+        }
         super.onDestroy();
+    }
+
+    @Override
+    protected void onPause() {
+        for(Timer timer:manager.getByType(Timer.TUBE_ON_TRACK)) {
+            manager.dao.update(timer);
+        }
+        super.onPause();
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        super.onCreateOptionsMenu(menu);
+        getMenuInflater().inflate(R.menu.my_menu, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
+        super.onOptionsItemSelected(item);
+        switch (item.getItemId()) {
+            case R.id.about_prog:
+                intent = new Intent(MainActivity.this, AboutProgramActivity.class);
+                startActivity(intent);
+                break;
+            case R.id.exit:
+                MainActivity.this.finish();
+                break;
+            case R.id.web:
+                SearchActivity.start(this,null);
+                break;
+        }
+        return true;
     }
 }

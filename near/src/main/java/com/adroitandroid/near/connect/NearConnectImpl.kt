@@ -15,7 +15,7 @@ import com.adroitandroid.near.model.Host
 import java.net.InetAddress
 
 class NearConnectImpl(private val mContext: Context,
-                      private val mListener: NearConnect.Listener,
+                      private var mListener: NearConnect.Listener,
                       private val mLooper: Looper,
                       private val mPeers: Set<Host>,
                       private val mPort: Int) : NearConnect {
@@ -136,6 +136,11 @@ class NearConnectImpl(private val mContext: Context,
             mContext.bindService(intent, startServerConnection, Context.BIND_AUTO_CREATE)
         }
     }
+
+    override fun setListener(listener: NearConnect.Listener) {
+        this.mListener = listener
+    }
+
 
     override fun stopReceiving(abortCurrentTransfers: Boolean) {
         //TODO("handle abort")

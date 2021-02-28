@@ -32,6 +32,7 @@ import com.application.tubtimer.adapters.TrackTubeAdapter;
 import com.application.tubtimer.adapters.TubeAdapter;
 import com.application.tubtimer.connection.Command;
 import com.application.tubtimer.connection.CommandManager;
+import com.application.tubtimer.connection.DiscoveryManager;
 import com.application.tubtimer.database.DatabaseManager;
 import com.application.tubtimer.database.Timer;
 import com.application.tubtimer.activities.MainActivity;
@@ -44,7 +45,7 @@ public class TubeFragment extends Fragment {
     public RecyclerView recycler;
     public DatabaseManager manager;
     public TextView empty;
-    EditText number, duration;
+    EditText number;
     LinearLayout linear_add;
     public CommandManager commandManager;
 
@@ -73,7 +74,6 @@ public class TubeFragment extends Fragment {
         // прячем клавиатуру
         InputMethodManager imm = (InputMethodManager) main.getSystemService(Context.INPUT_METHOD_SERVICE);
         imm.hideSoftInputFromWindow(number.getWindowToken(), InputMethodManager.HIDE_NOT_ALWAYS);
-        imm.hideSoftInputFromWindow(duration.getWindowToken(), InputMethodManager.HIDE_NOT_ALWAYS);
     }
 
     public void offerNumber(){
@@ -92,7 +92,6 @@ public class TubeFragment extends Fragment {
         button_show = root.findViewById(R.id.show_add);
         recycler = root.findViewById(R.id.tube_recycler);
         number = root.findViewById(R.id.tub_number);
-        duration = root.findViewById(R.id.duration);
         linear_add = root.findViewById(R.id.linear_add);
         empty = root.findViewById(R.id.empty_list);
 
@@ -121,7 +120,7 @@ public class TubeFragment extends Fragment {
                 try {
                     TubeAdapter adapter = (TubeAdapter) recycler.getAdapter();
                     Timer timer = new Timer(Integer.parseInt(number.getText().toString()),
-                            Integer.parseInt(duration.getText().toString()), adapter.type);
+                            30*60, adapter.type);
                     if (manager.timerNotExist(timer)){
                         manager.insert(timer);
                         commandManager.send(Command.ACTION_ADD, timer);
@@ -164,9 +163,12 @@ public class TubeFragment extends Fragment {
                         .setPositiveButton("Да", new DialogInterface.OnClickListener() {
                             @Override
                             public void onClick(DialogInterface dialog, int which) {
+                                TubeAdapter.TubeViewHolder holder1 = (TubeAdapter.TubeViewHolder) holder;
+                                int position = manager.getByType(holder1.timer.type).indexOf(holder1.timer);
                                 TubeAdapter adapter = (TubeAdapter) recycler.getAdapter();
-                                commandManager.send(Command.ACTION_DELETE, adapter.timers.get(holder.getAdapterPosition()));
-                                adapter.deleteTimer(holder.getAdapterPosition());
+                                if (commandManager.canChangeTimers())adapter.deleteTimer(position);
+                                else Toast.makeText(main,"Запрос отправлен", Toast.LENGTH_SHORT).show();
+                                commandManager.send(Command.ACTION_DELETE, holder1.timer);
                             }
                         })
                         .setNegativeButton("Нет", null)
