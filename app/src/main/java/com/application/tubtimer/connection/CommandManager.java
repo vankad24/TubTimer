@@ -19,6 +19,8 @@ import com.google.gson.Gson;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 
 public class CommandManager {
 
@@ -27,8 +29,11 @@ public class CommandManager {
     public final static String REQUEST_DELETE = "request_update";
     public static final String MESSAGE_REQUEST_PING = "ping";
 
+    static final int pingTime = 5;
+
     MainActivity main;
     public NearConnect nearConnection;
+    private HashMap<Host, Boolean> connectionStatus;
 
     public void setNearConnection(NearConnect nearConnection) {
         this.nearConnection = nearConnection;
@@ -50,8 +55,14 @@ public class CommandManager {
     public NearConnect.Listener getNearConnectListener() {
         return new NearConnect.Listener() {
             @Override
-            public void onReceive(@NotNull byte[] bytes, @NotNull Host sender) {
+            public void onReceive(@NotNull byte[] bytes, @NotNull final Host sender) {
                 try {
+                    if (DiscoveryManager.host&&!DiscoveryManager.connectedHosts.contains(sender)){
+                        DiscoveryManager.connectedHosts.add(sender);
+                        if (!connectionStatus.containsKey(sender))connectionStatus.put(sender,false);
+                        sendPingRequest(sender);
+                        Toast.makeText(main,sender.getName()+" подключён", Toast.LENGTH_SHORT).show();
+                    }
                     String message = new String(bytes);
                     Log.d("my", "receive " + message);
                     if (message.startsWith("&")) {
@@ -115,7 +126,20 @@ public class CommandManager {
                         UpdateAllHelper.updateAllAdapters(main, message);
                     }else switch (message){
                         case MESSAGE_REQUEST_PING:
-                            Toast.makeText(main.getApplicationContext(),"Ping", Toast.LENGTH_SHORT).show();
+//                            Toast.makeText(main.getApplicationContext(),"Ping", Toast.LENGTH_SHORT).show();
+                            connectionStatus.replace(sender,true);
+                            new Thread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    try {
+                                        Thread.sleep((pingTime - 2) * 1000);
+                                    } catch (InterruptedException e) {
+                                        e.printStackTrace();
+                                    }
+                                    sendPingRequest(sender);
+                                }
+                            }).start();
+
                             break;
                         case REQUEST_UPDATE_ALL:
                             sendAll();
@@ -143,6 +167,33 @@ public class CommandManager {
 
             }
         };
+    }
+
+    public void sendPingRequest(final Host host){
+        nearConnection.send(MESSAGE_REQUEST_PING.getBytes(), host);
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    Thread.sleep(pingTime * 1000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                if (connectionStatus.get(host)){
+                    connectionStatus.replace(host, false);
+                    Log.d("my",host.getName()+" connectionStatus ok");
+                } else {
+                    DiscoveryManager.connectedHosts.remove(host);
+                    main.runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            Toast.makeText(main,host.getName()+" отключён", Toast.LENGTH_SHORT).show();
+                        }
+                    });
+                }
+            }
+        }).start();
+
     }
 
     public boolean canChangeTimers(){
@@ -176,9 +227,17 @@ public class CommandManager {
         nearConnection.setListener(getNearConnectListener());
         requestUpdateAll();
         sendAll();
+        connectionStatus = new HashMap<>();
+
+        for (Host host: DiscoveryManager.connectedHosts)
+            connectionStatus.put(host, false);
+
+        if (DiscoveryManager.host)
+            for (Host host: DiscoveryManager.connectedHosts)
+                sendPingRequest(host);
+
 
     }
-
 
     public void send(int action , Timer timer){
         if(nearConnection==null/*||!DiscoveryManager.host*/){
