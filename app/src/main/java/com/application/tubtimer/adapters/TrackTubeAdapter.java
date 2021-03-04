@@ -34,15 +34,16 @@ public class TrackTubeAdapter extends TubeAdapter {
                 if (!timer.activated){
                     if (tubeFragment.commandManager.canChangeTimers())stopTimer(timer);
                     else Toast.makeText(tubeFragment.main,"Запрос отправлен", Toast.LENGTH_SHORT).show();
-                    tubeFragment.commandManager.send(Command.ACTION_CHANGE, timer);
+                    tubeFragment.commandManager.send(Command.ACTION_STOP, timer);
                 } else
                     new AlertDialog.Builder(holder.itemView.getContext())
                             .setMessage("Остановить таймер?")
                             .setPositiveButton("Да", new DialogInterface.OnClickListener() {
                                 @Override
                                 public void onClick(DialogInterface dialog, int which) {
-                                    stopTimer(timer);
-                                    tubeFragment.commandManager.send(Command.ACTION_CHANGE, timer);
+                                    if (tubeFragment.commandManager.canChangeTimers())stopTimer(timer);
+                                    else Toast.makeText(tubeFragment.main,"Запрос отправлен", Toast.LENGTH_SHORT).show();
+                                    tubeFragment.commandManager.send(Command.ACTION_STOP, timer);
 
                                 }
                             })

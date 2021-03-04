@@ -121,13 +121,23 @@ public class TubeFragment extends Fragment {
                     TubeAdapter adapter = (TubeAdapter) recycler.getAdapter();
                     Timer timer = new Timer(Integer.parseInt(number.getText().toString()),
                             30*60, adapter.type);
-                    if (manager.timerNotExist(timer)){
+                    if (manager.timerNotExist(timer)) {
                         manager.insert(timer);
                         commandManager.send(Command.ACTION_ADD, timer);
                         recycler.smoothScrollToPosition(0);
                         adapter.notifyItemInserted(0);
                         adapter.checkEmpty();
                         offerNumber();
+
+                        /*if (commandManager.canChangeTimers()){
+                            manager.insert(timer);
+                            recycler.smoothScrollToPosition(0);
+                            adapter.notifyItemInserted(0);
+                            adapter.checkEmpty();
+                            offerNumber();
+                        }
+                        else Toast.makeText(main,"Запрос отправлен", Toast.LENGTH_SHORT).show();
+                        commandManager.send(Command.ACTION_ADD, timer);*/
                     }else Toast.makeText(main, "Error", Toast.LENGTH_SHORT).show();
 
                 }catch (Exception e){

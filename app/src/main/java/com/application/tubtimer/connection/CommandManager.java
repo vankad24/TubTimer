@@ -13,6 +13,7 @@ import com.adroitandroid.near.connect.NearConnect;
 import com.adroitandroid.near.model.Host;
 import com.application.tubtimer.activities.MainActivity;
 import com.application.tubtimer.adapters.TubeAdapter;
+import com.application.tubtimer.database.DatabaseManager;
 import com.application.tubtimer.database.Timer;
 import com.google.gson.Gson;
 
@@ -57,9 +58,8 @@ public class CommandManager {
             @Override
             public void onReceive(@NotNull byte[] bytes, @NotNull final Host sender) {
                 try {
-                    if (DiscoveryManager.host&&!DiscoveryManager.connectedHosts.contains(sender)){
-                        DiscoveryManager.connectedHosts.add(sender);
-                        if (!connectionStatus.containsKey(sender))connectionStatus.put(sender,false);
+                    if (!connectionStatus.containsKey(sender)){
+                        connectionStatus.put(sender,false);
                         sendPingRequest(sender);
                         Toast.makeText(main,sender.getName()+" подключён", Toast.LENGTH_SHORT).show();
                     }
@@ -70,9 +70,9 @@ public class CommandManager {
                         final TubeAdapter activeAdapter = (TubeAdapter) main.tubeFragment.recycler.getAdapter();
                         switch (command.action) {
                             case Command.ACTION_ADD:
-                                if (DiscoveryManager.host) {
+                                /*if (DiscoveryManager.host) {
                                     new AlertDialog.Builder(main)
-                                            .setMessage(sender.getName() + " хочет запустить таймер №" + command.timer.number)
+                                            .setMessage(sender.getName() + " хочет добавить таймер №" + command.timer.number)
                                             .setPositiveButton("Да", new DialogInterface.OnClickListener() {
                                                 @Override
                                                 public void onClick(DialogInterface dialog, int which) {
@@ -85,19 +85,33 @@ public class CommandManager {
                                                 }
                                             })
                                             .setNegativeButton("Нет", null).create().show();
-                                }else {
+                                }else {*/
                                     if (main.manager.timerNotExist(command.timer)) {
                                         main.manager.insert(command.timer);
                                         if (command.timer.type == activeAdapter.type)
                                             activeAdapter.notifyItemInserted(0);
                                     }
-                                }
+                                //}
                                 break;
                             case Command.ACTION_CHANGE:
                                 main.manager.change(command.timer, activeAdapter);
                                 break;
                             case Command.ACTION_STOP:
-//                                main.manager.change(command.timer , activeAdapter);todo
+                                if (DiscoveryManager.host){
+                                    new AlertDialog.Builder(main)
+                                            .setMessage(sender.getName()+" хочет убрать таймер №"+command.timer.number)
+                                            .setPositiveButton("Да", new DialogInterface.OnClickListener() {
+                                                @Override
+                                                public void onClick(DialogInterface dialog, int which) {
+                                                    stop(command.timer, activeAdapter);
+                                                    send(Command.ACTION_STOP, command.timer);
+                                                }
+                                            })
+                                            .setNegativeButton("Нет", null).create().show();
+                                }else {
+                                    stop(command.timer,activeAdapter);
+                                }
+
                                 break;
                             case Command.ACTION_DELETE:
 
@@ -183,7 +197,7 @@ public class CommandManager {
                     connectionStatus.replace(host, false);
                     Log.d("my",host.getName()+" connectionStatus ok");
                 } else {
-                    DiscoveryManager.connectedHosts.remove(host);
+                    connectionStatus.remove(host);
                     main.runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
@@ -214,6 +228,15 @@ public class CommandManager {
                 }
             }
         }
+    }
+
+    void stop(Timer timer, TubeAdapter activeAdapter){
+        DatabaseManager.FindTimerHelper helper = main.manager.findTimerByNumber(timer);
+        helper.timers.set(helper.position,helper.timer);
+        activeAdapter.stopTimer(helper.timer);
+
+        main.manager.dao.update(helper.timer);
+        activeAdapter.notifyDataSetChanged();
     }
 
     public void requestUpdateAll(){

@@ -123,12 +123,12 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void onClick2(View view) {
-        if (commandManager.nearConnection!=null)
+        /*if (commandManager.nearConnection!=null)
             for (Host host:commandManager.nearConnection.getPeers()) {
                 commandManager.nearConnection.send(CommandManager.MESSAGE_REQUEST_PING.getBytes(), host);
                 Log.d("my",commandManager.nearConnection.getPeers().size()+"");
 
-            }
+            }*/
 //        commandManager.sendAll();
        /* Timer timer = tubeFragment.repairTubeAdapter.timers.get(0);
         timer = new Timer(timer.number,timer.duration,timer.duration,timer.type,false);

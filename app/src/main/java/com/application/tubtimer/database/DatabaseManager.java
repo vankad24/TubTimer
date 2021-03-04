@@ -43,43 +43,48 @@ public class DatabaseManager{
         return dao.getByNumber(number)==null;
     }
 
-
-    public void change(final Timer timer, TubeAdapter activeAdapter){
+    public FindTimerHelper findTimerByNumber(Timer timer){
         for (int i = 0; i < 3; i++) {
             ArrayList<Timer> list = getByType(i);
             for (int j = 0; j < list.size(); j++) {
                 Timer t = list.get(j);
-                if (t.number==timer.number) {
-                    Log.d("my", "change tube " + t.number);
-                    if (timer.type == t.type)
-                        list.set(j, timer);
-                    else if (timer.type == Timer.TUBE_IN_REPAIR) activeAdapter.moveToRepair(t);
-                    else {
-                        list.remove(t);
-                        if (t.type == Timer.TUBE_IN_REPAIR)update(timer);
-                    }
-
-                    if (timer.activated) {
-                        activeAdapter.startTimer(timer);
-                        timer.setOnTickListener(new Timer.TickListener() {
-                            @Override
-                            public void onTick(int secondsUntilFinished) {
-
-                            }
-
-                            @Override
-                            public void onFinish() {
-                                main.tubeFragment.trackTubeAdapter.finishTimer(timer);
-                            }
-                        });
-                    } else if (t.type == Timer.TUBE_ON_TRACK) activeAdapter.stopTimer(t);
-
-                    activeAdapter.notifyDataSetChanged();
-                    dao.update(timer);
-                    return;
-                }
+                if (t.number == timer.number) return new FindTimerHelper(t,j,list);
             }
         }
+        return null;
+    }
+
+    public void change(final Timer timer, TubeAdapter activeAdapter) {
+        FindTimerHelper timerHelper = findTimerByNumber(timer);
+        Timer t = timerHelper.timer;
+        ArrayList<Timer> list = timerHelper.timers;
+        Log.d("my", "change tube " + t.number);
+        if (timer.type == t.type)
+            list.set(timerHelper.position, timer);
+        else if (timer.type == Timer.TUBE_IN_REPAIR) activeAdapter.moveToRepair(t);
+        else {
+            list.remove(t);
+            if (t.type == Timer.TUBE_IN_REPAIR) update(timer);
+        }
+
+        if (timer.activated) {
+            activeAdapter.startTimer(timer);
+            timer.setOnTickListener(new Timer.TickListener() {
+                @Override
+                public void onTick(int secondsUntilFinished) {
+
+                }
+
+                @Override
+                public void onFinish() {
+                    main.tubeFragment.trackTubeAdapter.finishTimer(timer);
+                }
+            });
+        } else if (t.type == Timer.TUBE_ON_TRACK) activeAdapter.stopTimer(t);
+
+        activeAdapter.notifyDataSetChanged();
+        dao.update(timer);
+        return;
     }
     
     public boolean insert(Timer timer) {
@@ -143,5 +148,16 @@ public class DatabaseManager{
         this.track.addAll(track);
         this.free.addAll(free);
         this.repair.addAll(repair);
+    }
+
+    public class FindTimerHelper {
+        public Timer timer;
+        public ArrayList<Timer> timers;
+        public int position;
+        public FindTimerHelper(Timer timer, int pos, ArrayList<Timer> timers) {
+            this.timer = timer;
+            this.timers = timers;
+            position = pos;
+        }
     }
 }
