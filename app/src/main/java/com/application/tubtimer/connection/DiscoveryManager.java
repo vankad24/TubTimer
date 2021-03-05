@@ -48,10 +48,12 @@ public class DiscoveryManager {
     public DiscoveryManager(final SearchActivity activity) {
         this.activity = activity;
         adapter = new DeviceAdapter(activity);
-        
-//        connectedHosts = activity.getIntent().getParcelableArrayListExtra(SearchActivity.DEVICES);
+
         if (connectedHosts==null)connectedHosts = new ArrayList<>();
-        
+        foundHosts.addAll(connectedHosts);
+        if (host)adapter.setData(foundHosts);
+        else  if (!connectedHosts.isEmpty())activity.connectedDevice.setText("Подключено к "+connectedHosts.get(0).getName());
+
         if (isConnected())activity.button_search.setText("отключиться");
 
 

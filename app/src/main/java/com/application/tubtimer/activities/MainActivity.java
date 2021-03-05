@@ -103,14 +103,14 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
-        ArrayList<Host> connectedHosts = data.getParcelableArrayListExtra(SearchActivity.DEVICES);
+//        ArrayList<Host> connectedHosts = data.getParcelableArrayListExtra(SearchActivity.DEVICES);
 
 
         commandManager.notifyAllHosts();
-        if (connectedHosts!=null) {
+        if (DiscoveryManager.connectedHosts!=null) {
 //            commandManager.setPeers(new ArraySet<>(connectedHosts));
             Log.d("my","connect");
-            Log.d("my",connectedHosts.size()+"");
+            Log.d("my",DiscoveryManager.connectedHosts.size()+"");
 
         }else Log.d("my","null");
         super.onActivityResult(requestCode, resultCode, data);
@@ -118,7 +118,7 @@ public class MainActivity extends AppCompatActivity {
 
 
     public void onClick(View view) {
-        SearchActivity.start(this, commandManager.nearConnection==null? null: new ArrayList<>(commandManager.nearConnection.getPeers()));
+//        SearchActivity.start(this, commandManager.nearConnection==null? null: new ArrayList<>(commandManager.nearConnection.getPeers()));
 
     }
 
@@ -172,7 +172,7 @@ public class MainActivity extends AppCompatActivity {
                 MainActivity.this.finish();
                 break;
             case R.id.web:
-                SearchActivity.start(this,null);
+                SearchActivity.start(this);
                 break;
         }
         return true;

@@ -27,9 +27,9 @@ public class SearchActivity extends AppCompatActivity {
 
     public final static String DEVICES = "manager";
 
-    public static void start(MainActivity activity, ArrayList<Host> connectedHosts) {
+    public static void start(MainActivity activity) {
         Intent intent = new Intent(activity, SearchActivity.class);
-        intent.putParcelableArrayListExtra(DEVICES, connectedHosts);
+//        intent.putParcelableArrayListExtra(DEVICES, connectedHosts);
         activity.startActivityForResult(intent, 1);
     }
 

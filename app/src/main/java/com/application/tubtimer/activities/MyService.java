@@ -47,7 +47,7 @@ public class MyService extends Service {
         PendingIntent pIntent = PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
 
         Notification notif = new NotificationCompat.Builder(getApplicationContext(), NOTIF_ID)
-                .setSmallIcon(R.drawable.messager)
+                .setSmallIcon(R.drawable.icon1)
                 .setContentTitle("Время вышло!")
                 .setContentText(s)
                 .setAutoCancel(true)

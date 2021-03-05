@@ -90,6 +90,7 @@ public class CommandManager {
                                         main.manager.insert(command.timer);
                                         if (command.timer.type == activeAdapter.type)
                                             activeAdapter.notifyItemInserted(0);
+
                                     }
                                 //}
                                 break;
@@ -110,6 +111,7 @@ public class CommandManager {
                                             .setNegativeButton("Нет", null).create().show();
                                 }else {
                                     stop(command.timer,activeAdapter);
+                                    main.tubeFragment.recycler.smoothScrollToPosition(0);
                                 }
 
                                 break;
